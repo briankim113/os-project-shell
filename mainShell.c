@@ -44,14 +44,13 @@ int main(){
         
         // decode(inputString);
         printf("%s", inputString);
+        
+        if (strcmp(inputString, "exit\n") == 0) {
+            printf("goodbye!\n");
+            return 0;
+        }
 
         // lsCommand();
         pwdCommand();
-        
-
-        //the arguments that you want to pass to the executable followed by NULL.
-        //NULL signifies end of the srgument list
-        printf("\nProgram Terminated\n");
-        return 0;
     }
 }
