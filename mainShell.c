@@ -10,6 +10,7 @@
 
 void welcome(void){
     printf("Welcome to the main shell!\n");
+    printf("If you wish to exit the shell, use 'exit'\n");
 }
 
 int isInputEmpty(char *str){
