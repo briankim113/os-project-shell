@@ -19,10 +19,10 @@ int isInputEmpty(char *str){
     char buf[maxInput];
     fgets(buf, maxInput, stdin);
     
-    if (*buf == '\n') { //just newline char
+    if (*buf == '\n') { 
         return 1;
     }
-    else { //check if all whitespace
+    else { 
         char *tmp = buf;
         while (*tmp != '\n') {
             if (*tmp != ' ') {
@@ -35,8 +35,11 @@ int isInputEmpty(char *str){
     }
 }
 
-int singleCommand(char *command)
+// Determine the command and call the command
+void singleCommand(char *command)
 {
+    // printf("%s", command);
+    // commandParse Example [touch, text]
     char* commandParse[5];
     for (int i = 0; i < 5; i++)
     {
@@ -46,26 +49,32 @@ int singleCommand(char *command)
             // printf("%s\n",commandParse[i-1]);
             break;}
     }
-    int commandLength = 1;
+    int commandLength = 2;
     char* commandList[commandLength];
-    int commandNum;
-    commandList[0] = "ls";
+    int commandNum = 0;
+    commandList[0] = "ls\n";
+    commandList[1] = "pwd\n";
     
     for (int i = 0; i < commandLength; i++) {
-        // printf("command: %s\n commandList: %s\n", commandParse[0],commandList[i]);
+        // printf("command: %s, commandList: %s\n", commandParse[0],commandList[i]);
         if (strcmp(commandParse[0], commandList[i]) == 0) {
             commandNum=i+1;
             break;
         }
     }
+
+    // Call appropriate command
     switch (commandNum) {
             case 1:
-                printf("ls call");
-                // sleep(10);
+                // printf("ls call");
                 lsCommand();
                 break;
+            case 2:
+                // printf("pwd call");
+                pwdCommand();
+                break;
             default:
-                printf("Out of range");
+                // printf("Out of range");
                 break;
         } 
 
@@ -73,6 +82,8 @@ int singleCommand(char *command)
 
 int inputDecode(char *inputString)
 {
+    // Create an array of commands separated by pipes
+    // Count the number of pipes
     char* pipedCommands[5];
     int pipeCount;
     int i;
@@ -81,15 +92,11 @@ int inputDecode(char *inputString)
         pipedCommands[i] = strsep(&inputString, "|");
         if (pipedCommands[i] == NULL){
             pipeCount = i-1;
-            // printf("%d\n", i);
-            // printf("%s\n",pipedCommands[i-1]);
             break;}
     }
     if (pipeCount==0){
         singleCommand(pipedCommands[0]);
-    }
-     // returns zero if no pipe is found.
-    
+    }    
 }
 
 
@@ -103,8 +110,8 @@ int main()
         if (isInputEmpty(inputString))
             continue; //continue asking for actual input
         
+        //decode user input
         inputDecode(inputString);
-        printf("%s", inputString);
         
         if (strcmp(inputString, "exit\n") == 0) {
             printf("goodbye!\n");
