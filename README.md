@@ -11,8 +11,8 @@ supposed to create a fully functional remote shell including your own time-based
 ## Phase1 - Local CLI Shell
 In this phase, you have to develop using C your own shell/CLI that
 replicates features from the linux one such as ls, ls-l, pwd, mkdir, rm, | , … or a program to
-execute including its name. You should implement at least 15 commands and should include
-the composed commands including 1 pipe (…|…), 2 pipes (…|…|…) and 3 pipes (…|…|…|…).
+execute including its name. You should implement at least 10 single commands and should include
+5 composed commands (i.e. 1 pipe (…|…), 2 pipes (…|…|…), 3 pipes (…|…|…|…), input redirection, and output redirection).
 You can use the techniques that you have learned about creating processes (e.g. fork, excec),
 interprocess communications (e.g. pipes), etc.
 
