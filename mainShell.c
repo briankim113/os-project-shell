@@ -1,60 +1,52 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include<stdlib.h>
-#include<sys/types.h>
-#include<sys/wait.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "functions.h"
-// #include<readline/readline.h>
-// #include<readline/history.h>
+
 #define maxInput 50
 
-void welcome(void)
-{
-
-    printf("Welcome to the main Shell!");
+void welcome(void){
+    printf("Welcome to the main shell!\n");
 }
 
-int takeInput(char *str)
-{
-    char buf[maxInput];
+int isInputEmpty(char *str){
+    printf(">>> ");
 
-    printf("\n>>> ");
-    scanf("%s", buf);
-    // buf = readline("\n>>> ");
-    printf("step1");
-    if (strlen(buf) != 0)
-    {
-        strcpy(str, buf);
-        return 0;
+    char buf[maxInput];
+    fgets(buf, maxInput, stdin);
+    
+    if (*buf == '\n') { //just newline char
+        return 1;
     }
-    else
-    {
+    else { //check if all whitespace
+        char *tmp = buf;
+        while (*tmp != '\n') {
+            if (*tmp != ' ') {
+                strcpy(str, buf);
+                return 0;
+            }
+            tmp++;
+        }
         return 1;
     }
 }
 
-int inputDecode(char *inputString){
-
-}
-
-int main()
-{
-
+int main(){
+    welcome();
     char inputString[maxInput];
-    while(1)
-    {
-        welcome();
 
-        if (takeInput(inputString))
-            continue;
+    while (1){
+        if (isInputEmpty(inputString))
+            continue; //continue asking for actual input
         
-        decode(inputString);
-        printf("hi\n");
-        printf("%s",inputString);
+        // decode(inputString);
+        printf("%s", inputString);
 
-        lsCommand();
-
+        // lsCommand();
+        pwdCommand();
         
 
         //the arguments that you want to pass to the executable followed by NULL.
