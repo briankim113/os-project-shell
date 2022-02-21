@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include "functions.h"
 
-#define maxInput 50
+#define maxInput 150
 
 void welcome(void){
     printf("Welcome to the main shell!\n");
@@ -40,6 +40,8 @@ void singleCommand(char *command)
 {
     // printf("%s", command);
     // commandParse Example [touch, text]
+
+    // To-Do: should we free up the char* every time we call it at the end of function?
     char* commandParse[5];
     for (int i = 0; i < 5; i++)
     {
@@ -49,11 +51,14 @@ void singleCommand(char *command)
             // printf("%s\n",commandParse[i-1]);
             break;}
     }
-    int commandLength = 2;
+    int commandLength = 3;
     char* commandList[commandLength];
     int commandNum = 0;
     commandList[0] = "ls\n";
     commandList[1] = "pwd\n";
+    commandList[2] = "wc";
+    //need to figure out a way to get rid of \n and create a \0 null character for all arguments
+
     
     for (int i = 0; i < commandLength; i++) {
         // printf("command: %s, commandList: %s\n", commandParse[0],commandList[i]);
@@ -65,22 +70,41 @@ void singleCommand(char *command)
 
     // Call appropriate command
     switch (commandNum) {
-            case 1:
-                // printf("ls call");
-                lsCommand();
-                break;
-            case 2:
-                // printf("pwd call");
-                pwdCommand();
-                break;
-            default:
-                // printf("Out of range");
-                break;
-        } 
+        case 1:
+            // printf("ls call");
+            lsCommand();
+            break;
+        case 2:
+            // printf("pwd call");
+            pwdCommand();
+            break;
+        case 3:
+            printf("wc call\n");
+            //add current pwd and inputName to get the file
+            //but what happens if user actually provides the absolute path?
 
+            char path[maxInput];
+            getcwd(path, maxInput);
+            // printf("%s\n", path);
+            // printf("%s\n", commandParse[1]);
+            
+            char name_with_extension[maxInput];
+            strcpy(name_with_extension, path); /* copy name into the new var */
+            strcat(name_with_extension, "/"); /* add the extension */
+            strcat(name_with_extension, commandParse[1]);
+            name_with_extension[strlen(name_with_extension)-1] = '\0'; //get rid of newline char and use \0
+            printf("%s", name_with_extension);
+            sleep(3);
+            wcCommand(name_with_extension);
+            
+            break;
+        default:
+            // printf("Out of range");
+            break;
+    }
 }
 
-int inputDecode(char *inputString)
+void inputDecode(char *inputString)
 {
     // Create an array of commands separated by pipes
     // Count the number of pipes
@@ -113,6 +137,7 @@ int main()
         //decode user input
         inputDecode(inputString);
         
+        //exit is giving a weird behavior sometimes
         if (strcmp(inputString, "exit\n") == 0) {
             printf("goodbye!\n");
             return 0;
