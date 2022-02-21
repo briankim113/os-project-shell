@@ -8,10 +8,7 @@
 
 #define maxInput 150
 
-// To-Do: commands all require a fork b/c exec exits completely upon successs
-
-void lsCommand(void)
-{
+void lsCommand(){
     pid_t child = fork();
     if (child < 0){
         perror("Failed fork child");
@@ -29,8 +26,7 @@ void lsCommand(void)
     return;
 }
 
-void pwdCommand(void)
-{
+void pwdCommand(){
     pid_t child = fork();
     if (child < 0){
         perror("Failed fork child");

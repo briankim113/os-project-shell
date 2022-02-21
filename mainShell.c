@@ -41,21 +41,20 @@ int isInputEmpty(char *str){
 }
 
 // Determine the command and call the command
-void singleCommand(char *command)
-{
-    // printf("%s", command);
+void singleCommand(char *command){
     // commandParse Example [touch, text]
 
     // To-Do: should we free up the char* every time we call it at the end of function?
     char* commandParse[5];
-    for (int i = 0; i < 5; i++)
-    {
+    for (int i = 0; i < 5; i++){
         commandParse[i] = strsep(&command, " ");
         if (commandParse[i] == NULL){
             // printf("%d\n", i);
             // printf("%s\n",commandParse[i-1]);
-            break;}
+            break;
+        }
     }
+
     int commandLength = 3;
     char* commandList[commandLength];
     int commandNum = 0;
@@ -76,11 +75,9 @@ void singleCommand(char *command)
     // Call appropriate command
     switch (commandNum) {
         case 1:
-            // printf("ls call");
             lsCommand();
             break;
         case 2:
-            // printf("pwd call");
             pwdCommand();
             break;
         case 3:
@@ -97,9 +94,7 @@ void singleCommand(char *command)
             strcpy(name_with_extension, path); /* copy name into the new var */
             strcat(name_with_extension, "/"); /* add the extension */
             strcat(name_with_extension, commandParse[1]);
-            name_with_extension[strlen(name_with_extension)-1] = '\0'; //get rid of newline char and use \0
             printf("%s", name_with_extension);
-            sleep(3);
             wcCommand(name_with_extension);
             
             break;
@@ -109,8 +104,7 @@ void singleCommand(char *command)
     }
 }
 
-void inputDecode(char *inputString)
-{
+void inputDecode(char *inputString){
     // Create an array of commands separated by pipes
     // Count the number of pipes
     char* pipedCommands[5];
@@ -128,10 +122,7 @@ void inputDecode(char *inputString)
     }    
 }
 
-
-
-int main()
-{
+int main(){
     welcome();
     char inputString[maxInput];
 
@@ -142,7 +133,7 @@ int main()
         //decode user input
         inputDecode(inputString);
         
-        //exit is giving a weird behavior sometimes
+        //exit is giving a weird behavior sometimes - may be related to parent-child wait and exit if exec fails (with wc)
         if (strcmp(inputString, "exit") == 0) {
             printf("goodbye!\n");
             return 0;

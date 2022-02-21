@@ -1,3 +1,3 @@
-void lsCommand(void);
-void pwdCommand(void);
+void lsCommand();
+void pwdCommand();
 void wcCommand(const char*);
