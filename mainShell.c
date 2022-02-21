@@ -13,18 +13,23 @@ void welcome(void){
     printf("If you wish to exit the shell, use 'exit'\n");
 }
 
+/*
+this function checks if the user input is all whitespace
+it also replaces '\n' to '\0'
+*/
 int isInputEmpty(char *str){
     printf(">>> ");
 
     char buf[maxInput];
     fgets(buf, maxInput, stdin);
+    buf[strlen(buf)-1] = '\0';
     
-    if (*buf == '\n') { 
+    if (*buf == '\0') { 
         return 1;
     }
-    else { 
+    else {
         char *tmp = buf;
-        while (*tmp != '\n') {
+        while (*tmp != '\0') {
             if (*tmp != ' ') {
                 strcpy(str, buf);
                 return 0;
@@ -54,8 +59,8 @@ void singleCommand(char *command)
     int commandLength = 3;
     char* commandList[commandLength];
     int commandNum = 0;
-    commandList[0] = "ls\n";
-    commandList[1] = "pwd\n";
+    commandList[0] = "ls";
+    commandList[1] = "pwd";
     commandList[2] = "wc";
     //need to figure out a way to get rid of \n and create a \0 null character for all arguments
 
@@ -138,7 +143,7 @@ int main()
         inputDecode(inputString);
         
         //exit is giving a weird behavior sometimes
-        if (strcmp(inputString, "exit\n") == 0) {
+        if (strcmp(inputString, "exit") == 0) {
             printf("goodbye!\n");
             return 0;
         }
