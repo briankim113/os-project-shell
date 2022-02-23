@@ -9,7 +9,9 @@ void lsCommand(){
 
     else { //fork child succeeded
         if (child == 0) { //currently child
-            execl("/bin/ls", "ls", 0, NULL); //exits
+            execl("/bin/ls", "ls", 0, NULL);
+            perror("lsCommand"); //if we reached here, there is an error so we must exit
+            exit(EXIT_FAILURE);
         }
         else {
             wait(NULL);
@@ -28,6 +30,8 @@ void pwdCommand(){
     else { //fork child succeeded
         if (child == 0) { //currently child
             execl("/bin/pwd", "pwd", 0, NULL);
+            perror("pwdCommand"); //if we reached here, there is an error so we must exit
+            exit(EXIT_FAILURE);
         }
         else {
             wait(NULL);
@@ -46,7 +50,8 @@ void wcCommand(const char* inputName){
     else { //fork child succeeded
         if (child == 0) { //currently child
             execl("/bin/wc", "wc", inputName, NULL);
-            perror("wcCommand");
+            perror("wcCommand"); //if we reached here, there is an error so we must exit
+            exit(EXIT_FAILURE);
         }
         else {
             wait(NULL);
