@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include "functions.h"
-
-#define maxInput 150
 
 void lsCommand(){
     pid_t child = fork();
