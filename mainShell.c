@@ -7,15 +7,25 @@
 #include "functions.h"
 
 #define maxInput 150
+#define cmdListLen 3
 
+char* cmdList[cmdListLen] = {
+    "ls",
+    "pwd",
+    "wc"
+};
+
+/*
+prints welcome messages
+*/
 void welcome(void){
     printf("Welcome to the main shell!\n");
     printf("If you wish to exit the shell, use 'exit'\n");
 }
 
 /*
-this function checks if the user input is all whitespace
-it also replaces '\n' to '\0'
+checks if the user input is all whitespace
+and also replaces the last character from '\n' to '\0'
 */
 int isInputEmpty(char *str){
     printf(">>> ");
@@ -40,47 +50,58 @@ int isInputEmpty(char *str){
     }
 }
 
-// Determine the command and call the command
-void singleCommand(char *command){
-    // commandParse Example [touch, text]
-
-    // To-Do: should we free up the char* every time we call it at the end of function?
-    char* commandParse[5];
-    for (int i = 0; i < 5; i++){
-        commandParse[i] = strsep(&command, " ");
-        if (commandParse[i] == NULL){
-            // printf("%d\n", i);
-            // printf("%s\n",commandParse[i-1]);
+/*
+fill the array with commands separated by pipes and count the number of commands
+note that commandCount is number of pipes + 1
+*/
+void inputDecode(char* commands[], size_t size, char* input, int* commandCount){
+    for (int i = 0; i < size; i++){
+        commands[i] = strsep(&input, "|");
+        if (commands[i] == NULL){
+            *commandCount = i;
             break;
         }
     }
+}
 
-    int commandLength = 3;
-    char* commandList[commandLength];
-    int commandNum = 0;
-    commandList[0] = "ls";
-    commandList[1] = "pwd";
-    commandList[2] = "wc";
-    //need to figure out a way to get rid of \n and create a \0 null character for all arguments
+/*
+parse a single command, fill the arguments array, and return the associated cmdNum
+*/
+int parseCommand(char* arguments[], size_t size, char* command){
+    int cmdNum = -1; //none for now
 
+    //comdNum
+    arguments[0] = strsep(&command, " ");
+    for (int i = 0; i < cmdListLen; i++) {
+        if (strcmp(arguments[0], cmdList[i]) == 0) {
+            cmdNum = i;
+            break;
+        }
+    }
     
-    for (int i = 0; i < commandLength; i++) {
-        // printf("command: %s, commandList: %s\n", commandParse[0],commandList[i]);
-        if (strcmp(commandParse[0], commandList[i]) == 0) {
-            commandNum=i+1;
+    // example arguments[]: [touch, text.txt]
+    for (int i = 1; i < size; i++){
+        arguments[i] = strsep(&command, " ");
+        if (arguments[i] == NULL){
             break;
         }
     }
 
-    // Call appropriate command
+    return cmdNum;
+}
+
+/*
+run the appropriate command
+*/
+void runCommand(int commandNum, char* args[]){
     switch (commandNum) {
-        case 1:
+        case 0:
             lsCommand();
             break;
-        case 2:
+        case 1:
             pwdCommand();
             break;
-        case 3:
+        case 2:
             printf("wc call\n");
             //add current pwd and inputName to get the file
             //but what happens if user actually provides the absolute path?
@@ -93,33 +114,15 @@ void singleCommand(char *command){
             char name_with_extension[maxInput];
             strcpy(name_with_extension, path); /* copy name into the new var */
             strcat(name_with_extension, "/"); /* add the extension */
-            strcat(name_with_extension, commandParse[1]);
-            printf("%s", name_with_extension);
+            strcat(name_with_extension, args[1]);
+            printf("%s\n", name_with_extension);
             wcCommand(name_with_extension);
             
             break;
-        default:
-            // printf("Out of range");
+        default: //when -1 is called
+            printf("Command not recognized, please try again\n");
             break;
     }
-}
-
-void inputDecode(char *inputString){
-    // Create an array of commands separated by pipes
-    // Count the number of pipes
-    char* pipedCommands[5];
-    int pipeCount;
-    int i;
-    for (i = 0; i < 5; i++)
-    {
-        pipedCommands[i] = strsep(&inputString, "|");
-        if (pipedCommands[i] == NULL){
-            pipeCount = i-1;
-            break;}
-    }
-    if (pipeCount==0){
-        singleCommand(pipedCommands[0]);
-    }    
 }
 
 int main(){
@@ -130,13 +133,32 @@ int main(){
         if (isInputEmpty(inputString))
             continue; //continue asking for actual input
         
-        //decode user input
-        inputDecode(inputString);
-        
-        //exit is giving a weird behavior sometimes - may be related to parent-child wait and exit if exec fails (with wc)
         if (strcmp(inputString, "exit") == 0) {
             printf("goodbye!\n");
-            return 0;
+            break; //stop the shell
+        }
+
+        //otherwise decode user input and run command
+
+        //number of commands that are piped into a single line
+        char* pipeCommands[5]; //max five commands (4 pipes) for now
+        int commandCount;
+        inputDecode(pipeCommands, 5, inputString, &commandCount);
+
+        //for each command, parse the arguments
+        for (int i=0; i<commandCount; i++){
+            // printf("%d\t%s\n", i, pipeCommands[i]);
+
+            char* args[5]; //max five arguments for now, example: [touch, mytext.txt]
+            int cmdNum = parseCommand(args, 5, pipeCommands[i]); //is not working when I try with pipes
+
+            // printf("%d\t%s\n", cmdNum, args[0]);
+
+            //we should either fork here... or outside of the for loop?
+            //call the functions using cmdNum and pass any arguments we might have
+            runCommand(cmdNum, args);
         }
     }
+
+    return 0;
 }
