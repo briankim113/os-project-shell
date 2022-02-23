@@ -1,5 +1,5 @@
-all: mainShell.c commands.c
-	gcc mainShell.c commands.c -o shell
+all: mainShell.c commands.c inputHandling.c
+	gcc mainShell.c commands.c inputHandling.c -o shell
 	
 # mainShell: mainShell.c
 # 	gcc mainShell.c -o mainShell
@@ -8,4 +8,4 @@ all: mainShell.c commands.c
 # 	gcc commands.c -o commands
 
 clean:
-	rm shell
+	rm *.o shell
