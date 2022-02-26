@@ -53,3 +53,8 @@ void grepCommand(char* const* inputArg)
     exit(EXIT_FAILURE);
 }
 
+void catCommand(const char* fileName){
+    execlp("cat", "cat", fileName, NULL);
+    perror("catCommand");
+    exit(EXIT_FAILURE);
+}

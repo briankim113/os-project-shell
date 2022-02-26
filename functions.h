@@ -24,3 +24,4 @@ void topCommand();
 void echoCommand();
 void touchCommand(const char*);
 void grepCommand(char* const*);
+void catCommand(const char*);

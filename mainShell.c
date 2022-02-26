@@ -48,7 +48,9 @@ void runCommand(int commandNum, char* args[]){
                 case 8:
                     grepCommand(args);
                     break;
-
+                case 9:
+                    catCommand(args[1]);
+                    break;
                 default: //when -1 is called
                     printf("Command not recognized, please try again\n");
                     break;
