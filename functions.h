@@ -8,7 +8,7 @@
 
 //variables
 #define maxInput 150
-#define cmdListLen 3
+#define cmdListLen 4
 
 //inputHandling.c
 int isInputEmpty(char*);
@@ -19,3 +19,4 @@ int parseCommand(char* [], size_t, char*);
 void lsCommand();
 void pwdCommand();
 void wcCommand(const char*);
+// void grepCommand(const char**);

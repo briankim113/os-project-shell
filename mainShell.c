@@ -44,6 +44,10 @@ void runCommand(int commandNum, char* args[]){
                     wcCommand(name_with_extension);
                     
                     break;
+                // case 3:
+                //     // char* arr = args.Skip(1).ToArray();  
+                //     grepCommand(args);
+                //     break;
                 default: //when -1 is called
                     printf("Command not recognized, please try again\n");
                     break;
