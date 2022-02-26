@@ -5,7 +5,7 @@ char* cmdList[cmdListLen] = {
     "pwd",
     "wc",
     "ps",
-    "history",
+    "top",
     "echo",
     "touch",
     "less",

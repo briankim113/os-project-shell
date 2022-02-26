@@ -29,6 +29,12 @@ void runCommand(int commandNum, char* args[]){
                 case 2:
                     wcCommand(args[1]);
                     break;
+                case 3:
+                    psCommand();
+                    break;
+                case 4:
+                    topCommand();
+                    break;
                 // case 3:
                 //     // char* arr = args.Skip(1).ToArray();  
                 //     grepCommand(args);
