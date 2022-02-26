@@ -27,22 +27,7 @@ void runCommand(int commandNum, char* args[]){
                     pwdCommand();
                     break;
                 case 2:
-                    printf("wc call\n");
-                    //add current pwd and inputName to get the file
-                    //but what happens if user actually provides the absolute path?
-
-                    char path[maxInput];
-                    getcwd(path, maxInput);
-                    // printf("%s\n", path);
-                    // printf("%s\n", commandParse[1]);
-                    
-                    char name_with_extension[maxInput];
-                    strcpy(name_with_extension, path); /* copy name into the new var */
-                    strcat(name_with_extension, "/"); /* add the extension */
-                    strcat(name_with_extension, args[1]);
-                    printf("%s\n", name_with_extension);
-                    wcCommand(name_with_extension);
-                    
+                    wcCommand(args[1]);
                     break;
                 // case 3:
                 //     // char* arr = args.Skip(1).ToArray();  
