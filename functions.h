@@ -25,3 +25,4 @@ void echoCommand();
 void touchCommand(const char*);
 void lessCommand(char* const*);
 void grepCommand(char* const*);
+void catCommand(const char*);
