@@ -1,5 +1,6 @@
 all: mainShell.c commands.c inputHandling.c
 	gcc mainShell.c commands.c inputHandling.c -o shell
+	clear
 	
 # mainShell: mainShell.c
 # 	gcc mainShell.c -o mainShell
