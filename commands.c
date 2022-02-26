@@ -13,7 +13,7 @@ void pwdCommand(){
 }
 
 void wcCommand(const char* inputName){
-    execl("/bin/wc", "wc", inputName, NULL);
+    execl("/usr/bin/wc", "wc", inputName, NULL);
     perror("wcCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
