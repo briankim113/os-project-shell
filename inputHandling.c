@@ -3,7 +3,14 @@
 char* cmdList[cmdListLen] = {
     "ls",
     "pwd",
-    "wc"
+    "wc",
+    "ps",
+    "history",
+    "echo",
+    "touch",
+    "less",
+    "grep",
+    "cat"
 };
 
 /*
