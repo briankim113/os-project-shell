@@ -45,6 +45,9 @@ void runCommand(int commandNum, char* args[]){
                 case 6:
                     touchCommand(args[1]);
                     break;
+                case 7:
+                    lessCommand(args);
+                    break;
                 case 8:
                     grepCommand(args);
                     break;

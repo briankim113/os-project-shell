@@ -23,4 +23,5 @@ void psCommand();
 void topCommand();
 void echoCommand();
 void touchCommand(const char*);
+void lessCommand(char* const*);
 void grepCommand(char* const*);

@@ -46,6 +46,13 @@ void touchCommand(const char* fileName){
     exit(EXIT_FAILURE);
 }
 
+void lessCommand(char* const* inputArg)
+{
+    execvp("less", inputArg);
+    perror("lessCommand"); //if we reached here, there is an error so we must exit
+    exit(EXIT_FAILURE);
+}
+
 void grepCommand(char* const* inputArg)
 {
     execvp("grep", inputArg);
