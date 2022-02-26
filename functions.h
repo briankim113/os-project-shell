@@ -21,4 +21,5 @@ void pwdCommand();
 void wcCommand(const char*);
 void psCommand();
 void topCommand();
+void echoCommand();
 // void grepCommand(const char**);

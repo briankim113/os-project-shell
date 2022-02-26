@@ -30,6 +30,12 @@ void topCommand(){
     exit(EXIT_FAILURE);
 }
 
+void echoCommand(const char* args){
+    execlp("echo", "echo", args, NULL);
+    perror("echoCommand");
+    exit(EXIT_FAILURE);
+}
+
 // void grepCommand(const char **inputArg)
 // {
 
