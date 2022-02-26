@@ -36,6 +36,12 @@ void echoCommand(const char* args){
     exit(EXIT_FAILURE);
 }
 
+void touchCommand(const char* fileName){
+    execlp("touch", "touch", fileName, NULL);
+    perror("touchCommand");
+    exit(EXIT_FAILURE);
+}
+
 // void grepCommand(const char **inputArg)
 // {
 

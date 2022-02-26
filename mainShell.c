@@ -38,6 +38,9 @@ void runCommand(int commandNum, char* args[]){
                 case 5:
                     echoCommand(args[1]);
                     break;
+                case 6:
+                    touchCommand(args[1]);
+                    break;
                 // case 3:
                 //     // char* arr = args.Skip(1).ToArray();  
                 //     grepCommand(args);
