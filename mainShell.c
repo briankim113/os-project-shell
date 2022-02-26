@@ -1,6 +1,10 @@
 #include "functions.h"
 
 /*
+TO-DO: inside runCommand: what happens if we pass all the args instead of just args[1]?
+*/
+
+/*
 prints welcome messages
 */
 void welcome(void){
