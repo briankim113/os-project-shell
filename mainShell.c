@@ -1,6 +1,10 @@
 #include "functions.h"
 
 /*
+TO-DO: inside runCommand: what happens if we pass all the args instead of just args[1]?
+*/
+
+/*
 prints welcome messages
 */
 void welcome(void){
@@ -29,10 +33,22 @@ void runCommand(int commandNum, char* args[]){
                 case 2:
                     wcCommand(args[1]);
                     break;
+                case 3:
+                    psCommand();
+                    break;
+                case 4:
+                    topCommand();
+                    break;
+                case 5:
+                    echoCommand(args[1]);
+                    break;
+                case 6:
+                    touchCommand(args[1]);
+                    break;
                 case 8:
-                    // char* arr = args.Skip(1).ToArray();  
                     grepCommand(args);
                     break;
+
                 default: //when -1 is called
                     printf("Command not recognized, please try again\n");
                     break;

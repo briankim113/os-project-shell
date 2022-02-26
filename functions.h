@@ -19,4 +19,8 @@ int parseCommand(char* [], size_t, char*);
 void lsCommand();
 void pwdCommand();
 void wcCommand(const char*);
+void psCommand();
+void topCommand();
+void echoCommand();
+void touchCommand(const char*);
 void grepCommand(char* const*);

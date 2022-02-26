@@ -21,9 +21,35 @@ void wcCommand(const char *inputName)
     exit(EXIT_FAILURE);
 }
 
+
+void psCommand(){
+    execlp("ps", "ps", 0, NULL);
+    perror("psCommand"); //if we reached here, there is an error so we must exit
+    exit(EXIT_FAILURE);
+}
+
+void topCommand(){
+    execlp("top", "top", 0, NULL);
+    perror("topCommand"); //if we reached here, there is an error so we must exit
+    exit(EXIT_FAILURE);
+}
+
+void echoCommand(const char* args){
+    execlp("echo", "echo", args, NULL);
+    perror("echoCommand");
+    exit(EXIT_FAILURE);
+}
+
+void touchCommand(const char* fileName){
+    execlp("touch", "touch", fileName, NULL);
+    perror("touchCommand");
+    exit(EXIT_FAILURE);
+}
+
 void grepCommand(char* const* inputArg)
 {
     execvp("grep", inputArg);
     perror("grepCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
+
