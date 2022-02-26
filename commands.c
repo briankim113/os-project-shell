@@ -1,22 +1,19 @@
 #include "functions.h"
 
-void lsCommand()
-{
+void lsCommand(){
     execlp("ls", "ls", 0, NULL);
     perror("lsCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
 
-void pwdCommand()
-{
+void pwdCommand(){
     execlp("pwd", "pwd", 0, NULL);
     perror("pwdCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
 
-void wcCommand(const char *inputName)
-{
-    execlp("wc", "wc", inputName, NULL);
+void wcCommand(char* const* inputArg){
+    execvp("wc", inputArg);
     perror("wcCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
@@ -34,34 +31,32 @@ void topCommand(){
     exit(EXIT_FAILURE);
 }
 
-void echoCommand(const char* args){
-    execlp("echo", "echo", args, NULL);
+void echoCommand(char* const* inputArg){
+    execvp("echo", inputArg);
     perror("echoCommand");
     exit(EXIT_FAILURE);
 }
 
-void touchCommand(const char* fileName){
-    execlp("touch", "touch", fileName, NULL);
+void touchCommand(char* const* inputArg){
+    execvp("touch", inputArg);
     perror("touchCommand");
     exit(EXIT_FAILURE);
 }
 
-void lessCommand(char* const* inputArg)
-{
+void lessCommand(char* const* inputArg){
     execvp("less", inputArg);
     perror("lessCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
 
-void grepCommand(char* const* inputArg)
-{
+void grepCommand(char* const* inputArg){
     execvp("grep", inputArg);
     perror("grepCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
 
-void catCommand(const char* fileName){
-    execlp("cat", "cat", fileName, NULL);
+void catCommand(char* const* inputArg){
+    execvp("cat", inputArg);
     perror("catCommand");
     exit(EXIT_FAILURE);
 }

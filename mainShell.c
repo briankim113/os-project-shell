@@ -1,10 +1,6 @@
 #include "functions.h"
 
 /*
-TO-DO: inside runCommand: what happens if we pass all the args instead of just args[1]?
-*/
-
-/*
 prints welcome messages
 */
 void welcome(void){
@@ -31,7 +27,7 @@ void runCommand(int commandNum, char* args[]){
                     pwdCommand();
                     break;
                 case 2:
-                    wcCommand(args[1]);
+                    wcCommand(args);
                     break;
                 case 3:
                     psCommand();
@@ -40,10 +36,10 @@ void runCommand(int commandNum, char* args[]){
                     topCommand();
                     break;
                 case 5:
-                    echoCommand(args[1]);
+                    echoCommand(args);
                     break;
                 case 6:
-                    touchCommand(args[1]);
+                    touchCommand(args);
                     break;
                 case 7:
                     lessCommand(args);
@@ -52,7 +48,7 @@ void runCommand(int commandNum, char* args[]){
                     grepCommand(args);
                     break;
                 case 9:
-                    catCommand(args[1]);
+                    catCommand(args);
                     break;
                 default: //when -1 is called
                     printf("Command not recognized, please try again\n");

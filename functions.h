@@ -18,11 +18,11 @@ int parseCommand(char* [], size_t, char*);
 //commands.c
 void lsCommand();
 void pwdCommand();
-void wcCommand(const char*);
+void wcCommand(char* const*);
 void psCommand();
 void topCommand();
 void echoCommand();
-void touchCommand(const char*);
+void touchCommand(char* const*);
 void lessCommand(char* const*);
 void grepCommand(char* const*);
-void catCommand(const char*);
+void catCommand(char* const*);
