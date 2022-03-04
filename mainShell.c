@@ -178,21 +178,22 @@ int main()
 
         //we only have a single command - this is the only case where we do input/output redirection
         if (commandCount == 1){
-            pid_t pid = fork();
-            if (pid == -1){
+            pid_t pid1 = fork();
+            if (pid1 == -1){
                 perror("fork failed");
                 exit(EXIT_FAILURE);
             }
 
             //parent - runs exec
-            if (pid == 0){ 
+            if (pid1 == 0){ 
                 singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
                 exit(EXIT_SUCCESS);
             }
 
             //child - waits
             else { 
-                wait(NULL);
+                int status;
+                waitpid(pid1, &status, 0);
             }
 
         }
@@ -205,14 +206,14 @@ int main()
                 exit(EXIT_FAILURE);
             }
 
-            pid_t pid = fork();
-            if (pid == -1){
+            pid_t pid1 = fork();
+            if (pid1 == -1){
                 perror("fork failed");
                 exit(EXIT_FAILURE);
             }
 
             //parent - runs 1st exec
-            if (pid == 0){
+            if (pid1 == 0){
                 dup2(pipefds_1[1], STDOUT_FILENO); //replace stdout with the write end of the pipe
                 close(pipefds_1[0]); //close read to pipe
                 singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
@@ -220,14 +221,14 @@ int main()
             }
 
             else {
-                pid = fork();
-                if (pid == -1){
+                pid_t pid2 = fork();
+                if (pid2 == -1){
                     perror("fork failed");
                     exit(EXIT_FAILURE);
                 }
 
                 //child1 - runs 2nd exec
-                if (pid == 0) {
+                if (pid2 == 0) {
                     dup2(pipefds_1[0], STDIN_FILENO); //replace stdin with the read end of the pipe
                     close(pipefds_1[1]); //close write to pipe
                     singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
@@ -238,7 +239,8 @@ int main()
                 else {
                     close(pipefds_1[0]);
                     close(pipefds_1[1]);
-                    wait(NULL);
+                    int status;
+                    waitpid(pid2, &status, 0);
                 }
             }
         }
