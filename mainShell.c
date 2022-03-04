@@ -175,9 +175,21 @@ int main()
         inputDecode(pipeCommands, maxCommands, inputString, &commandCount);
 
         //we only have a single command - this is the only case where we do input/output redirection
-        if (commandCount == 1)
-        {
-            singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+        if (commandCount == 1){
+            pid_t pid = fork();
+            if (pid == -1){
+                perror("fork failed");
+                exit(EXIT_FAILURE);
+            }
+
+            if (pid == 0){ //parent - runs exec
+                singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+                exit(EXIT_SUCCESS);
+            }
+            else { //child
+                wait(NULL);
+            }
+
         }
 
         else if (commandCount == 2)
@@ -208,9 +220,7 @@ int main()
 
                 //close read to pipe
                 close(pipefds_1[0]);
-                // execlp("pwd", "pwd", NULL);
                 singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
-                printf("parent done");
                 exit(EXIT_SUCCESS);
             }
 
@@ -218,10 +228,10 @@ int main()
             {
                 pid = fork();
                 if (pid == -1)
-            {
+                {
                 perror("fork");
                 exit(EXIT_FAILURE);
-            }
+                }
 
                 if (pid==0) { //parent IN child, so child
                     //Replace stdin with the read end of the pipe
@@ -230,23 +240,15 @@ int main()
                     //close write to pipe
                     close(pipefds_1[1]);
                     singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
-                    printf("child done");
                     exit(EXIT_SUCCESS);
                 }
-
                 else {
                     int status;
+                    close(pipefds_1[0]);
                     close(pipefds_1[1]);
                     waitpid(pid, &status, 0);
                 }
-
-
-                
-
-                // exit(EXIT_SUCCESS);
             }
-
-            // Pipes end
         }
 
         else if (commandCount == 3)
