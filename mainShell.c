@@ -169,7 +169,7 @@ int main()
         // printf("%s\n", filename);
 
         //number of commands that are piped into a single line
-        int maxCommands = 4;
+        int maxCommands = 5;
         char *pipeCommands[maxCommands]; //max four commands (3 pipes) for now
         int commandCount;
         inputDecode(pipeCommands, maxCommands, inputString, &commandCount);
@@ -203,57 +203,92 @@ int main()
 
         else if (commandCount == 2)
         {
-            // Pipes start
-            int pipefds_1[2];
-            if (pipe(pipefds_1) == -1)
+            int pipe1[2], pipe2[2];
+            int pid0, pid1, pid2;
+            // char *argp = {"./addone", "first_argument", "second_argument", NULL};
+
+            pipe(pipe1);
+            pid0 = fork();
+            if (pid0 == 0)
             {
-                perror("pipe failed");
-                exit(EXIT_FAILURE);
+                // close the read end of pipe1:
+                close(pipe1[0]);
+                // redirect stdout to the write end of pipe1:
+                dup2(pipe1[1], 1);
+                singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+
+                // execvp("./addone", argp);
             }
 
-            pid_t pid1 = fork();
-            if (pid1 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
-
-            //parent - runs 1st exec
+            pid1 = fork();
             if (pid1 == 0)
             {
-                dup2(pipefds_1[1], STDOUT_FILENO); //replace stdout with the write end of the pipe
-                close(pipefds_1[0]);               //close read to pipe
-                singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
-                exit(EXIT_SUCCESS);
+                // close the write end of pipe1:
+                close(pipe1[1]);
+                // redirect stdin to the read end of pipe1:
+                dup2(pipe1[0], 0);
+
+                singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
+
             }
 
-            else
-            {
-                pid_t pid2 = fork();
-                if (pid2 == -1)
-                {
-                    perror("fork failed");
-                    exit(EXIT_FAILURE);
-                }
 
-                //child1 - runs 2nd exec
-                if (pid2 == 0)
-                {
-                    dup2(pipefds_1[0], STDIN_FILENO); //replace stdin with the read end of the pipe
-                    close(pipefds_1[1]);              //close write to pipe
-                    singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
-                    exit(EXIT_SUCCESS);
-                }
+            
+            close(pipe1[0]);
+            close(pipe1[1]);
+            waitpid(pid0, NULL, 0);
+            waitpid(pid1, NULL, 0);
+            // // Pipes start
+            // int pipefds_1[2];
+            // if (pipe(pipefds_1) == -1)
+            // {
+            //     perror("pipe failed");
+            //     exit(EXIT_FAILURE);
+            // }
 
-                //child2 - waits
-                else
-                {
-                    close(pipefds_1[0]);
-                    close(pipefds_1[1]);
-                    int status;
-                    waitpid(pid2, &status, 0);
-                }
-            }
+            // pid_t pid1 = fork();
+            // if (pid1 == -1)
+            // {
+            //     perror("fork failed");
+            //     exit(EXIT_FAILURE);
+            // }
+
+            // //parent - runs 1st exec
+            // if (pid1 == 0)
+            // {
+            //     dup2(pipefds_1[1], STDOUT_FILENO); //replace stdout with the write end of the pipe
+            //     close(pipefds_1[0]);               //close read to pipe
+            //     singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+            //     exit(EXIT_SUCCESS);
+            // }
+
+            // else
+            // {
+            //     pid_t pid2 = fork();
+            //     if (pid2 == -1)
+            //     {
+            //         perror("fork failed");
+            //         exit(EXIT_FAILURE);
+            //     }
+
+            //     //child1 - runs 2nd exec
+            //     if (pid2 == 0)
+            //     {
+            //         dup2(pipefds_1[0], STDIN_FILENO); //replace stdin with the read end of the pipe
+            //         close(pipefds_1[1]);              //close write to pipe
+            //         singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
+            //         exit(EXIT_SUCCESS);
+            //     }
+
+            //     //child2 - waits
+            //     else
+            //     {
+            //         close(pipefds_1[0]);
+            //         close(pipefds_1[1]);
+            //         int status;
+            //         waitpid(pid2, &status, 0);
+            //     }
+            // }
         }
 
         else if (commandCount == 3)
@@ -291,7 +326,6 @@ int main()
 
                 singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
 
-                // execvp("./addone", argp);
             }
 
             pid2 = fork();
@@ -307,7 +341,6 @@ int main()
 
                 singleCommand(pipeCommands[2], inputRedirect, outputRedirect, filename);
 
-                // execvp("./addone", argp);
             }
 
             
@@ -318,97 +351,94 @@ int main()
             waitpid(pid0, NULL, 0);
             waitpid(pid1, NULL, 0);
             waitpid(pid2, NULL, 0);
-            // int pipefds_1[2];
-            // if (pipe(pipefds_1) == -1)
-            // {
-            //     perror("pipe failed");
-            //     exit(EXIT_FAILURE);
-            // }
-
-            // pid_t pid1 = fork();
-            // if (pid1 == -1)
-            // {
-            //     perror("fork failed");
-            //     exit(EXIT_FAILURE);
-            // }
-
-            // //parent - runs 1st exec
-            // if (pid1 == 0)
-            // {
-            //     dup2(pipefds_1[1], STDOUT_FILENO); //replace stdout with the write end of the pipe
-            //     close(pipefds_1[0]);               //close read to pipe
-            //     singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
-            //     exit(EXIT_SUCCESS);
-            // }
-
-            // else
-            // {
-            //     int pipefds_2[2];
-            //     if (pipe(pipefds_2) == -1)
-            //     {
-            //         perror("pipe failed");
-            //         exit(EXIT_FAILURE);
-            //     }
-            //     pid_t pid2 = fork();
-            //     if (pid2 == -1)
-            //     {
-            //         perror("fork failed");
-            //         exit(EXIT_FAILURE);
-            //     }
-
-            //     //child1 - runs 2nd exec
-            //     if (pid2 == 0)
-            //     {
-            //         //for pipe1 it reads
-            //         dup2(pipefds_1[0], STDIN_FILENO); //replace stdin with the read end of the pipe
-            //         close(pipefds_1[1]);              //close write to pipe
-
-            //         //for pipe2 it writes
-            //         dup2(pipefds_2[1], STDOUT_FILENO); //replace stdout with the write end of the pipe
-            //         close(pipefds_2[0]);
-            //         singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
-            //         exit(EXIT_SUCCESS);
-            //     }
-
-            //     //child2 - waits
-            //     else
-            //     {
-
-            //         pid_t pid3 = fork();
-            //         if (pid3 == -1)
-            //         {
-            //             perror("fork failed");
-            //             exit(EXIT_FAILURE);
-            //         }
-
-            //         //child1 - runs 2nd exec
-            //         if (pid3 == 0)
-            //         {
-            //             dup2(pipefds_2[0], STDIN_FILENO); //replace stdin with the read end of the pipe
-            //             close(pipefds_2[1]);              //close write to pipe
-            //             singleCommand(pipeCommands[2], inputRedirect, outputRedirect, filename);
-            //             exit(EXIT_SUCCESS);
-            //         }
-
-            //         //child2 - waits
-            //         else
-            //         {
-            //             close(pipefds_2[0]);
-            //             close(pipefds_2[1]);
-            //             close(pipefds_1[0]);
-            //             close(pipefds_1[1]);
-            //             int status;
-            //             waitpid(pid3, &status, 0);
-            //         }
-
-            //         // int status;
-            //         // waitpid(pid2, &status, 0);
-            //     }
-            // }
+         
         }
 
         else if (commandCount == 4)
         {
+            int pipe1[2], pipe2[2], pipe3[2];
+            int pid0, pid1, pid2, pid3;
+            // char *argp = {"./addone", "first_argument", "second_argument", NULL};
+
+            pipe(pipe1);
+            pid0 = fork();
+            if (pid0 == 0)
+            {
+                // close the read end of pipe1:
+                close(pipe1[0]);
+                // redirect stdout to the write end of pipe1:
+                dup2(pipe1[1], 1);
+                singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+
+            }
+
+            pipe(pipe2);
+            pid1 = fork();
+            if (pid1 == 0)
+            {
+                // close the write end of pipe1:
+                close(pipe1[1]);
+                // close the read end of pipe2:
+                close(pipe2[0]);
+                // redirect stdin to the read end of pipe1:
+                dup2(pipe1[0], 0);
+                // redirect stdout to the write end of pipe2:
+                dup2(pipe2[1], 1);
+
+                singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
+
+            }
+
+            pipe(pipe3);
+            pid2 = fork();
+            if (pid2 == 0)
+            {
+                // close unused pipe1:
+                close(pipe1[0]);
+                close(pipe1[1]);
+                // close the write end of pipe2:
+                close(pipe2[1]);
+                // close the read end of pipe3:
+                close(pipe3[0]);
+                // redirect stdin to the read end of pipe2:
+                dup2(pipe2[0], 0);
+                // redirect stdout to the write end of pipe3:
+                dup2(pipe3[1], 1);
+
+                singleCommand(pipeCommands[2], inputRedirect, outputRedirect, filename);
+
+            }
+
+            pid3 = fork();
+            if (pid3 == 0)
+            {
+                // close unused pipe1:
+                close(pipe1[0]);
+                close(pipe1[1]);
+
+                // close unused pipe2:
+                close(pipe2[0]);
+                close(pipe2[1]);
+                // close the write end of pipe3:
+                close(pipe3[1]);
+                // redirect stdin to the read end of pipe3:
+                dup2(pipe3[0], 0);
+
+                singleCommand(pipeCommands[3], inputRedirect, outputRedirect, filename);
+
+            }
+
+            
+            close(pipe1[0]);
+            close(pipe1[1]);
+            close(pipe2[0]);
+            close(pipe2[1]);
+            close(pipe3[0]);
+            close(pipe3[1]);
+            waitpid(pid0, NULL, 0);
+            waitpid(pid1, NULL, 0);
+            waitpid(pid2, NULL, 0);
+            waitpid(pid3, NULL, 0);
         }
 
         else
