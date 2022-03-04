@@ -10,44 +10,23 @@ void welcome()
 }
 
 /*
-
+checks the commandNum and calls the appropriate single command with args
 */
 void switchCommand(int commandNum, char *args[])
 {
     switch (commandNum)
     {
-    case 0:
-        lsCommand();
-        break;
-    case 1:
-        pwdCommand();
-        break;
-    case 2:
-        wcCommand(args);
-        break;
-    case 3:
-        psCommand();
-        break;
-    case 4:
-        topCommand();
-        break;
-    case 5:
-        echoCommand(args);
-        break;
-    case 6:
-        touchCommand(args);
-        break;
-    case 7:
-        lessCommand(args);
-        break;
-    case 8:
-        grepCommand(args);
-        break;
-    case 9:
-        catCommand(args);
-        break;
-    default:
-        break;
+    case 0: lsCommand(args); break;
+    case 1: pwdCommand(args); break;
+    case 2: wcCommand(args); break;
+    case 3: psCommand(args); break;
+    case 4: topCommand(args); break;
+    case 5: echoCommand(args); break;
+    case 6: touchCommand(args); break;
+    case 7: lessCommand(args); break;
+    case 8: grepCommand(args); break;
+    case 9: catCommand(args); break;
+    default: break;
     }
 }
 

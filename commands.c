@@ -1,13 +1,13 @@
 #include "functions.h"
 
-void lsCommand(){
-    execlp("ls", "ls", 0, NULL);
+void lsCommand(char* const* inputArg){
+    execvp("ls", inputArg);
     perror("lsCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
 
-void pwdCommand(){
-    execlp("pwd", "pwd", 0, NULL);
+void pwdCommand(char* const* inputArg){
+    execvp("pwd", inputArg);
     perror("pwdCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
@@ -18,15 +18,14 @@ void wcCommand(char* const* inputArg){
     exit(EXIT_FAILURE);
 }
 
-
-void psCommand(){
-    execlp("ps", "ps", 0, NULL);
+void psCommand(char* const* inputArg){
+    execvp("ps", inputArg);
     perror("psCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }
 
-void topCommand(){
-    execlp("top", "top", 0, NULL);
+void topCommand(char* const* inputArg){
+    execvp("top", inputArg);
     perror("topCommand"); //if we reached here, there is an error so we must exit
     exit(EXIT_FAILURE);
 }

@@ -20,12 +20,12 @@ void inputDecode(char* [], size_t, char*, int*);
 int parseCommand(char* [], size_t, char*);
 
 //commands.c
-void lsCommand();
-void pwdCommand();
+void lsCommand(char* const*);
+void pwdCommand(char* const*);
 void wcCommand(char* const*);
-void psCommand();
-void topCommand();
-void echoCommand();
+void psCommand(char* const*);
+void topCommand(char* const*);
+void echoCommand(char* const*);
 void touchCommand(char* const*);
 void lessCommand(char* const*);
 void grepCommand(char* const*);
