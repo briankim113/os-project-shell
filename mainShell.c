@@ -146,8 +146,8 @@ int main()
         //1 pipe, 2 commands
         else if (commandCount == 2)
         {
-            int pipe1[2], pipe2[2];
-            int pid0, pid1, pid2;
+            int pipe1[2];
+            int pid0, pid1;
 
             pipe(pipe1);
             pid0 = fork();
@@ -191,56 +191,62 @@ int main()
 
         else if (commandCount == 3)
         {
-
             int pipe1[2], pipe2[2];
             int pid0, pid1, pid2;
-            // char *argp = {"./addone", "first_argument", "second_argument", NULL};
 
             pipe(pipe1);
             pid0 = fork();
+
+            if (pid0 == -1)
+            {
+                perror("fork failed");
+                exit(EXIT_FAILURE);
+            }
+
+            //run 1st exec and exit
             if (pid0 == 0)
             {
-                // close the read end of pipe1:
-                close(pipe1[0]);
-                // redirect stdout to the write end of pipe1:
-                dup2(pipe1[1], 1);
+                close(pipe1[0]); // close the read end of pipe1
+                dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
                 singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
-
-                // execvp("./addone", argp);
             }
 
             pipe(pipe2);
             pid1 = fork();
+
+            if (pid1 == -1)
+            {
+                perror("fork failed");
+                exit(EXIT_FAILURE);
+            }
+
+            //run 2nd exec and exit
             if (pid1 == 0)
             {
-                // close the write end of pipe1:
-                close(pipe1[1]);
-                // close the read end of pipe2:
-                close(pipe2[0]);
-                // redirect stdin to the read end of pipe1:
-                dup2(pipe1[0], 0);
-                // redirect stdout to the write end of pipe2:
-                dup2(pipe2[1], 1);
-
+                close(pipe1[1]); // close the write end of pipe1
+                close(pipe2[0]); // close the read end of pipe2
+                dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
+                dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
                 singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
-
             }
 
             pid2 = fork();
-            if (pid2 == 0)
+
+            if (pid2 == -1)
             {
-                // close unused pipe1:
-                close(pipe1[0]);
-                close(pipe1[1]);
-                // close the write end of pipe2:
-                close(pipe2[1]);
-                // redirect stdin to the read end of pipe2:
-                dup2(pipe2[0], 0);
-
-                singleCommand(pipeCommands[2], inputRedirect, outputRedirect, filename);
-
+                perror("fork failed");
+                exit(EXIT_FAILURE);
             }
 
+            //run 3rd exec and exit
+            if (pid2 == 0)
+            {
+                close(pipe1[0]); // close unused pipe1 for both ends
+                close(pipe1[1]); 
+                close(pipe2[1]); // close the write end of pipe2
+                dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
+                singleCommand(pipeCommands[2], inputRedirect, outputRedirect, filename);
+            }
             
             close(pipe1[0]);
             close(pipe1[1]);
@@ -249,84 +255,87 @@ int main()
             waitpid(pid0, NULL, 0);
             waitpid(pid1, NULL, 0);
             waitpid(pid2, NULL, 0);
-         
+            //done with all three exec
         }
 
         else if (commandCount == 4)
         {
             int pipe1[2], pipe2[2], pipe3[2];
             int pid0, pid1, pid2, pid3;
-            // char *argp = {"./addone", "first_argument", "second_argument", NULL};
 
             pipe(pipe1);
             pid0 = fork();
+
+            if (pid0 == -1)
+            {
+                perror("fork failed");
+                exit(EXIT_FAILURE);
+            }
+
             if (pid0 == 0)
             {
-                // close the read end of pipe1:
-                close(pipe1[0]);
-                // redirect stdout to the write end of pipe1:
-                dup2(pipe1[1], 1);
+                close(pipe1[0]); // close the read end of pipe1
+                dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
                 singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
-
             }
 
             pipe(pipe2);
             pid1 = fork();
+
+            if (pid1 == -1)
+            {
+                perror("fork failed");
+                exit(EXIT_FAILURE);
+            }
+
             if (pid1 == 0)
             {
-                // close the write end of pipe1:
-                close(pipe1[1]);
-                // close the read end of pipe2:
-                close(pipe2[0]);
-                // redirect stdin to the read end of pipe1:
-                dup2(pipe1[0], 0);
-                // redirect stdout to the write end of pipe2:
-                dup2(pipe2[1], 1);
-
+                close(pipe1[1]); // close the write end of pipe1
+                close(pipe2[0]); // close the read end of pipe2
+                dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
+                dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
                 singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
-
             }
 
             pipe(pipe3);
             pid2 = fork();
+
+            if (pid2 == -1)
+            {
+                perror("fork failed");
+                exit(EXIT_FAILURE);
+            }
+
             if (pid2 == 0)
             {
-                // close unused pipe1:
-                close(pipe1[0]);
+                close(pipe1[0]); // close unused pipe1 for both ends
                 close(pipe1[1]);
-                // close the write end of pipe2:
-                close(pipe2[1]);
-                // close the read end of pipe3:
-                close(pipe3[0]);
-                // redirect stdin to the read end of pipe2:
-                dup2(pipe2[0], 0);
-                // redirect stdout to the write end of pipe3:
-                dup2(pipe3[1], 1);
-
+                close(pipe2[1]); // close the write end of pipe2
+                close(pipe3[0]); // close the read end of pipe3
+                dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
+                dup2(pipe3[1], 1); // redirect stdout to the write end of pipe3
                 singleCommand(pipeCommands[2], inputRedirect, outputRedirect, filename);
-
             }
 
             pid3 = fork();
-            if (pid3 == 0)
+
+            if (pid3 == -1)
             {
-                // close unused pipe1:
-                close(pipe1[0]);
-                close(pipe1[1]);
-
-                // close unused pipe2:
-                close(pipe2[0]);
-                close(pipe2[1]);
-                // close the write end of pipe3:
-                close(pipe3[1]);
-                // redirect stdin to the read end of pipe3:
-                dup2(pipe3[0], 0);
-
-                singleCommand(pipeCommands[3], inputRedirect, outputRedirect, filename);
-
+                perror("fork failed");
+                exit(EXIT_FAILURE);
             }
 
-            
+            if (pid3 == 0)
+            {
+                close(pipe1[0]); // close unused pipe1 for both ends
+                close(pipe1[1]);
+                close(pipe2[0]); // close unused pipe2 for both ends
+                close(pipe2[1]);
+                close(pipe3[1]); // close the write end of pipe3
+                dup2(pipe3[0], 0); // redirect stdin to the read end of pipe3
+                singleCommand(pipeCommands[3], inputRedirect, outputRedirect, filename);
+            }
+
             close(pipe1[0]);
             close(pipe1[1]);
             close(pipe2[0]);
@@ -337,6 +346,7 @@ int main()
             waitpid(pid1, NULL, 0);
             waitpid(pid2, NULL, 0);
             waitpid(pid3, NULL, 0);
+            //done with all four exec
         }
 
         else

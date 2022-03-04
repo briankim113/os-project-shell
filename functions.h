@@ -11,7 +11,7 @@
 //variables
 #define maxInput 150
 #define cmdListLen 10
-#define maxCmds 4
+#define maxCmds 5
 #define maxArgs 5
 
 //inputHandling.c
