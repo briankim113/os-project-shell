@@ -1,0 +1,26 @@
+Single Commands
+    ls
+    pwd
+    wc Makefile
+    ps
+    top
+    echo hello (requires ESC -> :q to exit back to shell)
+    touch newfile.txt
+    less Makefile (requires ENTER -> q to exit back to shell)
+    grep all Makefile
+    cat Makefile
+
+Input Redirection (assume no pipes and no both redirections)
+    cat < Makefile
+    wc < Makefile
+    grep all < Makefile
+
+Output Redirection (assume no pipes and no both redirections)
+    cat Makefile > cat.txt
+    wc Makefile > wc.txt
+    grep all Makefile > grep.txt
+
+Pipes
+    pwd | wc
+    ps | grep PID | wc
+    ls | grep c | grep h | wc
