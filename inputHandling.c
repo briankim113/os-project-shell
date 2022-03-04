@@ -43,20 +43,64 @@ int isInputEmpty(char *str){
 
 /*
 detect redirection, set int to 1 if true
+ASSUME that input redirection always happens in the first command and that output redirection always happens in the last command
+ASSUME that command and flags are together
+    e.g. ls > ls.txt -l is "illegal" and ls -l > ls.txt is fine
+ASSUME that only one redirection can happen at once
 */
 
-void redirection(char* inputString, int* inputRedirect, int* outputRedirect){
-    if (strchr(inputString, '>') != NULL){ //output exists
+void stripTrailWhiteSpace(char* temp){
+    int i = 0, j = 0;
+    while (temp[i]){
+        if (temp[i] != ' ')
+        temp[j++] = temp[i];
+        i++;
+    }
+    temp[j] = '\0';
+}
+
+void redirection(char* inputString, int* inputRedirect, int* outputRedirect, char* filename){
+    char* outputPtr = strchr(inputString, '>');
+    char* inputPtr = strchr(inputString, '<');
+
+    char* temp = inputString;
+
+    if (outputPtr != NULL){ //output exists, input does NOT
         *outputRedirect = 1;
-    } else {
+        *inputRedirect = 0;
+
+        //now inputString only contains the command and temp contains only the filename
+        inputString = strsep(&temp, ">");
+
+        //get rid of whitespace from temp and inputString
+        stripTrailWhiteSpace(temp);
+        stripTrailWhiteSpace(inputString);
+
+        //copy temp content into filename
+        strcpy(filename, temp);
+    }
+
+    else if (inputPtr != NULL){ //input exists, output does NOT
+        *inputRedirect = 1;
+        *outputRedirect = 0;
+
+        //now inputString only contains the command and temp contains only the filename
+        inputString = strsep(&temp, "<");
+
+        //get rid of whitespace from temp and inputString
+        stripTrailWhiteSpace(temp);
+        stripTrailWhiteSpace(inputString);
+
+        //copy temp content into filename
+        strcpy(filename, temp);
+    }
+
+    else { //both does not exist
+        *inputRedirect = 0;
         *outputRedirect = 0;
     }
 
-    if (strchr(inputString, '<') != NULL){ //input exists
-        *inputRedirect = 1;
-    } else {
-        *inputRedirect = 0;
-    }
+
 }
 
 /*

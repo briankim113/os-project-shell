@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 //variables
 #define maxInput 150
@@ -12,7 +13,7 @@
 
 //inputHandling.c
 int isInputEmpty(char*);
-void redirection(char*, int*, int*);
+void redirection(char*, int*, int*, char*);
 void inputDecode(char* [], size_t, char*, int*);
 int parseCommand(char* [], size_t, char*);
 
