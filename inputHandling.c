@@ -1,17 +1,6 @@
 #include "functions.h"
 
-char* cmdList[cmdListLen] = {
-    "ls",
-    "pwd",
-    "wc",
-    "ps",
-    "top",
-    "echo",
-    "touch",
-    "less",
-    "grep",
-    "cat"
-};
+char* cmdList[cmdListLen] = {"ls", "pwd", "wc", "ps", "top", "echo", "touch", "less", "grep", "cat"};
 
 /*
 checks if the user input is all whitespace
@@ -76,17 +65,11 @@ void redirection(char* inputString, int* inputRedirect, int* outputRedirect, cha
         //now inputString only contains the command and temp contains only the filename
         inputString = strsep(&temp, ">");
 
-        // printf("%s %s\n", temp, inputString);
-
         //get rid of whitespace from temp and inputString
         stripLeadWhiteSpace(&temp);
         stripLeadWhiteSpace(&inputString);
         stripTrailWhiteSpace(temp);
         stripTrailWhiteSpace(inputString);
-
-        // printf("outside\n");
-        // printf("%s/\n", temp);
-        // printf("%s/\n", inputString);
 
         //copy temp content into filename
         strcpy(filename, temp);
@@ -105,10 +88,6 @@ void redirection(char* inputString, int* inputRedirect, int* outputRedirect, cha
         stripTrailWhiteSpace(temp);
         stripTrailWhiteSpace(inputString);
 
-        // printf("outside\n");
-        // printf("%s/\n", temp);
-        // printf("%s/\n", inputString);
-
         //copy temp content into filename
         strcpy(filename, temp);
     }
@@ -117,8 +96,6 @@ void redirection(char* inputString, int* inputRedirect, int* outputRedirect, cha
         *inputRedirect = 0;
         *outputRedirect = 0;
     }
-
-
 }
 
 /*
