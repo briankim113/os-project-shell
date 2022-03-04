@@ -85,15 +85,9 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
     if (outputRedirect)
     {
         // printf("outputRedirect\n");
-
-        //https://stackoverflow.com/questions/230062/whats-the-best-way-to-check-if-a-file-exists-in-c
-        if (access(filename, F_OK) != 0)
-        {
-            // if file doesn't exist, we should create the file
-            FILE *fp;
-            fp = fopen(filename, "w");
-            fclose(fp);
-        }
+        FILE *fp;
+        fp = fopen(filename, "w+"); // w+ for overwrite
+        fclose(fp);
 
         int fd = open(filename, O_WRONLY); //write
         if (fd == -1)
