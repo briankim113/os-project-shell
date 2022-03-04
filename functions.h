@@ -6,10 +6,12 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 //variables
 #define maxInput 150
 #define cmdListLen 10
+#define maxArgs 5
 
 //inputHandling.c
 int isInputEmpty(char*);

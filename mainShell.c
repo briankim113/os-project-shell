@@ -3,16 +3,64 @@
 /*
 prints welcome messages
 */
-void welcome(void){
+void welcome(){
     printf("Welcome to the main shell!\n");
     printf("If you wish to exit the shell, use 'exit'\n");
 }
 
 /*
+
+*/
+void switchCommand(int commandNum, char* args[]){
+    switch (commandNum) {
+        case 0:
+            lsCommand();
+            break;
+        case 1:
+            pwdCommand();
+            break;
+        case 2:
+            wcCommand(args);
+            break;
+        case 3:
+            psCommand();
+            break;
+        case 4:
+            topCommand();
+            break;
+        case 5:
+            echoCommand(args);
+            break;
+        case 6:
+            touchCommand(args);
+            break;
+        case 7:
+            lessCommand(args);
+            break;
+        case 8:
+            grepCommand(args);
+            break;
+        case 9:
+            catCommand(args);
+            break;
+        default:
+            break;
+    }
+}
+
+
+/*
 run the appropriate command
 intputRedirect / outputRedirect: 1 if true, 0 if false
 */
-void runCommand(int commandNum, char* args[], int inputRedirect, int outputRedirect, char* filename){
+void singleCommand(char* pipeCommands[], char* args[], int inputRedirect, int outputRedirect, char* filename){
+    int commandNum = parseCommand(args, maxArgs, pipeCommands[0]);
+
+    if (commandNum == -1) { //-1 means this command is not valid
+        printf("Command not recognized, please try again\n");
+        return;
+    }
+
     pid_t child = fork();
     if (child < 0){ //fork failed
         perror("Failed fork child");
@@ -61,40 +109,7 @@ void runCommand(int commandNum, char* args[], int inputRedirect, int outputRedir
                 close(fd);     // fd no longer needed - the dup'ed handles are sufficient
             }
 
-            switch (commandNum) {
-                case 0:
-                    lsCommand();
-                    break;
-                case 1:
-                    pwdCommand();
-                    break;
-                case 2:
-                    wcCommand(args);
-                    break;
-                case 3:
-                    psCommand();
-                    break;
-                case 4:
-                    topCommand();
-                    break;
-                case 5:
-                    echoCommand(args);
-                    break;
-                case 6:
-                    touchCommand(args);
-                    break;
-                case 7:
-                    lessCommand(args);
-                    break;
-                case 8:
-                    grepCommand(args);
-                    break;
-                case 9:
-                    catCommand(args);
-                    break;
-                default:
-                    break;
-            }
+            switchCommand(commandNum, args);
 
             //undo dup2()
             dup2(saved_stdout, 1);
@@ -136,22 +151,46 @@ int main(){
         int commandCount;
         inputDecode(pipeCommands, maxCommands, inputString, &commandCount);
 
-        //for each command, parse the arguments
-        for (int i=0; i<commandCount; i++){
-            // printf("%d\t%s\n", i, pipeCommands[i]);
-
-            char* args[5]; //max five arguments for now, example: [touch, mytext.txt]
-            int cmdNum = parseCommand(args, 5, pipeCommands[i]); //is not working when I try with pipes
-
+        //we only have a single command - this is the only case where we do input/output redirection
+        if (commandCount == 1) {
+            char* args[maxArgs]; //max five arguments for now, example: [touch, mytext.txt]
             // printf("%d\t%s\n", cmdNum, args[0]);
-
-            //call the functions using cmdNum and pass any arguments we might have
-            if (cmdNum == -1) { //-1 means this command is not valid
-                printf("Command not recognized, please try again\n");
-                break;
-            }
-            runCommand(cmdNum, args, inputRedirect, outputRedirect, filename);
+            singleCommand(pipeCommands, args, inputRedirect, outputRedirect, filename);
         }
+
+        else if (commandCount == 2) {
+
+        }
+
+        else if (commandCount == 3) {
+
+        }
+
+        else if (commandCount == 4) {
+
+        }
+
+        else {
+            printf("Too many piped commands, please limit to 3 pipes\n");
+            break;
+        }
+
+
+        // for (int i=0; i<commandCount; i++){
+        //     // printf("%d\t%s\n", i, pipeCommands[i]);
+
+        //     char* args[5]; //max five arguments for now, example: [touch, mytext.txt]
+        //     int cmdNum = parseCommand(args, 5, pipeCommands[i]); //is not working when I try with pipes
+
+        //     // printf("%d\t%s\n", cmdNum, args[0]);
+
+        //     //call the functions using cmdNum and pass any arguments we might have
+        //     if (cmdNum == -1) { //-1 means this command is not valid
+        //         printf("Command not recognized, please try again\n");
+        //         break;
+        //     }
+        //     singleCommand(cmdNum, args, inputRedirect, outputRedirect, filename);
+        // }
     }
 
     return 0;
