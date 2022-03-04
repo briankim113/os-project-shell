@@ -114,50 +114,39 @@ int main()
 
         //otherwise decode user input and run command
 
-        //first detect redirection
+        //first detect redirection '<' or '>'
         redirection(inputString, &inputRedirect, &outputRedirect, filename);
 
-        // printf("%d %d %s %s\n", inputRedirect, outputRedirect, inputString, filename);
-        // printf("%s\n", filename);
-
-        //number of commands that are piped into a single line
-        int maxCommands = 5;
-        char *pipeCommands[maxCommands]; //max four commands (3 pipes) for now
+        char *pipeCommands[maxCmds]; //max four commands (3 pipes)
         int commandCount;
-        inputDecode(pipeCommands, maxCommands, inputString, &commandCount);
+        inputDecode(pipeCommands, maxCmds, inputString, &commandCount);
 
         //source for fork() parent-child relationship: https://stackoverflow.com/questions/33884291/pipes-dup2-and-exec
 
         //we only have a single command - this is the only case where we do input/output redirection
         if (commandCount == 1)
         {
-            pid_t pid1 = fork();
-            if (pid1 == -1)
+            int pid0 = fork();
+            if (pid0 == -1)
             {
                 perror("fork failed");
                 exit(EXIT_FAILURE);
             }
 
-            //parent - runs exec
-            if (pid1 == 0)
+            //run exec and exit
+            if (pid0 == 0)
             {
                 singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
-                exit(EXIT_SUCCESS);
             }
-
-            //child - waits
-            else
-            {
-                int status;
-                waitpid(pid1, &status, 0);
-            }
+            
+            waitpid(pid0, NULL, 0);
         }
 
+        //1 pipe, 2 commands
         else if (commandCount == 2)
         {
             int pipe1[2], pipe2[2];
             int pid0, pid1, pid2;
-            // char *argp = {"./addone", "first_argument", "second_argument", NULL};
 
             pipe(pipe1);
             pid0 = fork();
@@ -168,8 +157,6 @@ int main()
                 // redirect stdout to the write end of pipe1:
                 dup2(pipe1[1], 1);
                 singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
-
-                // execvp("./addone", argp);
             }
 
             pid1 = fork();
