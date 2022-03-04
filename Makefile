@@ -3,4 +3,4 @@ all: mainShell.c commands.c inputHandling.c
 	clear
 
 clean:
-	rm *.o shell
+	rm shell
