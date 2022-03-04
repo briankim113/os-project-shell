@@ -49,12 +49,18 @@ ASSUME that command and flags are together
 ASSUME that only one redirection can happen at once
 */
 
-void stripTrailWhiteSpace(char* temp){
-    int i = strlen(temp)-1;
-    while (temp[i] == ' '){
-        i--;
-    }
-    temp[i+1] = '\0';
+void stripLeadWhiteSpace(char** str){
+    //lead whitespace - https://stackoverflow.com/questions/9713180/function-to-remove-leading-whitespace-does-not-change-string-in-caller
+    int i;
+    for (i = 0; (*str)[i] == ' '; i++) {}
+    *str = *str + i;
+}
+
+void stripTrailWhiteSpace(char* str){
+    //trail whitespace
+    int i = strlen(str)-1;
+    while (str[i] == ' ') i--;
+    str[i+1] = '\0';
 }
 
 void redirection(char* inputString, int* inputRedirect, int* outputRedirect, char* filename){
@@ -73,10 +79,14 @@ void redirection(char* inputString, int* inputRedirect, int* outputRedirect, cha
         // printf("%s %s\n", temp, inputString);
 
         //get rid of whitespace from temp and inputString
+        stripLeadWhiteSpace(&temp);
+        stripLeadWhiteSpace(&inputString);
         stripTrailWhiteSpace(temp);
         stripTrailWhiteSpace(inputString);
 
-        // printf("%s %s\n", temp, inputString);
+        // printf("outside\n");
+        // printf("%s/\n", temp);
+        // printf("%s/\n", inputString);
 
         //copy temp content into filename
         strcpy(filename, temp);
@@ -90,8 +100,14 @@ void redirection(char* inputString, int* inputRedirect, int* outputRedirect, cha
         inputString = strsep(&temp, "<");
 
         //get rid of whitespace from temp and inputString
+        stripLeadWhiteSpace(&temp);
+        stripLeadWhiteSpace(&inputString);
         stripTrailWhiteSpace(temp);
         stripTrailWhiteSpace(inputString);
+
+        // printf("outside\n");
+        // printf("%s/\n", temp);
+        // printf("%s/\n", inputString);
 
         //copy temp content into filename
         strcpy(filename, temp);
