@@ -50,13 +50,11 @@ ASSUME that only one redirection can happen at once
 */
 
 void stripTrailWhiteSpace(char* temp){
-    int i = 0, j = 0;
-    while (temp[i]){
-        if (temp[i] != ' ')
-        temp[j++] = temp[i];
-        i++;
+    int i = strlen(temp)-1;
+    while (temp[i] == ' '){
+        i--;
     }
-    temp[j] = '\0';
+    temp[i+1] = '\0';
 }
 
 void redirection(char* inputString, int* inputRedirect, int* outputRedirect, char* filename){
@@ -72,9 +70,13 @@ void redirection(char* inputString, int* inputRedirect, int* outputRedirect, cha
         //now inputString only contains the command and temp contains only the filename
         inputString = strsep(&temp, ">");
 
+        // printf("%s %s\n", temp, inputString);
+
         //get rid of whitespace from temp and inputString
         stripTrailWhiteSpace(temp);
         stripTrailWhiteSpace(inputString);
+
+        // printf("%s %s\n", temp, inputString);
 
         //copy temp content into filename
         strcpy(filename, temp);

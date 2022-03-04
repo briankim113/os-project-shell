@@ -22,7 +22,9 @@ void runCommand(int commandNum, char* args[], int inputRedirect, int outputRedir
         if (child == 0) { //currently child
             //redirection - https://stackoverflow.com/questions/2605130/redirecting-exec-output-to-a-buffer-or-file
             
-            // printf("%d %d %d %s\n", commandNum, inputRedirect, outputRedirect, filename);
+            printf("%s %d %d %d %s\n", args[0], commandNum, inputRedirect, outputRedirect, filename);
+            int saved_stdout = dup(1);
+            int saved_stdin = dup(0);
 
             if (outputRedirect) {
                 // printf("outputRedirect\n");
@@ -41,25 +43,20 @@ void runCommand(int commandNum, char* args[], int inputRedirect, int outputRedir
                     exit(EXIT_FAILURE);
                 }
 
-                // printf("%d\n", fd);
                 dup2(fd, 1);   // make stdout go to file
-                dup2(fd, 2);   // make stderr go to file - you may choose to not do this
                 close(fd);     // fd no longer needed - the dup'ed handles are sufficient                
             }
-            
-            
-            
-            
+
             else if (inputRedirect) {
                 // printf("inputRedirect\n");
 
                 //if file doesn't exist, we should NOT create it
                 int fd = open(filename, O_RDONLY); //read
-                // printf("%d", fd);
                 if (fd == -1) {
                     perror("open error for inputRedirect");
                     exit(EXIT_FAILURE);
                 }
+
                 dup2(fd, 0);   // make stdin go to file
                 close(fd);     // fd no longer needed - the dup'ed handles are sufficient
             }
@@ -95,10 +92,14 @@ void runCommand(int commandNum, char* args[], int inputRedirect, int outputRedir
                 case 9:
                     catCommand(args);
                     break;
-                default: //when -1 is called
-                    printf("Command not recognized, please try again\n");
+                default:
                     break;
             }
+
+            //undo dup2()
+            dup2(saved_stdout, 1);
+            dup2(saved_stdin, 0);
+
         } //end of child
         else { //parent
             wait(NULL);
@@ -126,9 +127,6 @@ int main(){
         //first detect redirection
         redirection(inputString, &inputRedirect, &outputRedirect, filename);
 
-        // TO-DO: right now the inputString which contains the command has a trailing whitespace
-        // filename's trailing whitespace is taken care of inside redirection()
-
         // printf("%d %d %s %s\n", inputRedirect, outputRedirect, inputString, filename);
         // printf("%s\n", filename);
 
@@ -146,8 +144,11 @@ int main(){
 
             // printf("%d\t%s\n", cmdNum, args[0]);
 
-            //we should either fork here... or outside of the for loop?
             //call the functions using cmdNum and pass any arguments we might have
+            if (cmdNum == -1) { //-1 means this command is not valid
+                printf("Command not recognized, please try again\n");
+                break;
+            }
             runCommand(cmdNum, args, inputRedirect, outputRedirect, filename);
         }
     }
