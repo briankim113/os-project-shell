@@ -31,13 +31,10 @@ int isInputEmpty(char *str){
 }
 
 /*
-detect redirection, set int to 1 if true
-ASSUME that input redirection always happens in the first command and that output redirection always happens in the last command
-ASSUME that command and flags are together
-    e.g. ls > ls.txt -l is "illegal" and ls -l > ls.txt is fine
-ASSUME that only one redirection can happen at once
+strip leading and trailing whitespaces
+for stripLeadWhiteSpace, we need to pass the actual & to the char*, hence char**
+for stripTrailWhiteSpace, we simply pass char*
 */
-
 void stripLeadWhiteSpace(char** str){
     //lead whitespace - https://stackoverflow.com/questions/9713180/function-to-remove-leading-whitespace-does-not-change-string-in-caller
     int i;
@@ -52,6 +49,9 @@ void stripTrailWhiteSpace(char* str){
     str[i+1] = '\0';
 }
 
+/*
+detect redirection, set redirect integers to 1 if true
+*/
 void redirection(char* inputString, int* inputRedirect, int* outputRedirect, char* filename){
     char* outputPtr = strchr(inputString, '>');
     char* inputPtr = strchr(inputString, '<');
