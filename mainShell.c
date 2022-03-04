@@ -118,7 +118,7 @@ int main()
         redirection(inputString, &inputRedirect, &outputRedirect, filename);
 
         char *pipeCommands[maxCmds]; //max four commands (3 pipes)
-        int commandCount;
+        int commandCount = 0;
         inputDecode(pipeCommands, maxCmds, inputString, &commandCount);
 
         //source for fork() parent-child relationship: https://stackoverflow.com/questions/33884291/pipes-dup2-and-exec
@@ -349,7 +349,7 @@ int main()
             //done with all four exec
         }
 
-        else
+        else //commandCount is not modified from inputDecode and is still 0
         {
             printf("Too many piped commands, please limit to 3 pipes\n");
             continue;
