@@ -131,9 +131,10 @@ int main(){
         // printf("%s\n", filename);
 
         //number of commands that are piped into a single line
-        char* pipeCommands[5]; //max five commands (4 pipes) for now
+        int maxCommands = 4;
+        char* pipeCommands[maxCommands]; //max four commands (3 pipes) for now
         int commandCount;
-        inputDecode(pipeCommands, 5, inputString, &commandCount);
+        inputDecode(pipeCommands, maxCommands, inputString, &commandCount);
 
         //for each command, parse the arguments
         for (int i=0; i<commandCount; i++){
