@@ -132,6 +132,8 @@ void inputDecode(char* commands[], size_t size, char* input, int* commandCount){
             *commandCount = i;
             break;
         }
+        stripLeadWhiteSpace(&commands[i]);
+        stripTrailWhiteSpace(commands[i]);
     }
 }
 
