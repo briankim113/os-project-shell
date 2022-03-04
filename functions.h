@@ -12,6 +12,7 @@
 
 //inputHandling.c
 int isInputEmpty(char*);
+void redirection(char*, int*, int*);
 void inputDecode(char* [], size_t, char*, int*);
 int parseCommand(char* [], size_t, char*);
 

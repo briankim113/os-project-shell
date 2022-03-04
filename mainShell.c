@@ -10,8 +10,9 @@ void welcome(void){
 
 /*
 run the appropriate command
+intputRedirect / outputRedirect: 1 if true, 0 if false
 */
-void runCommand(int commandNum, char* args[]){
+void runCommand(int commandNum, char* args[], int inputRedirect, int outputRedirect, char* fileName){
     pid_t child = fork();
     if (child < 0){ //fork failed
         perror("Failed fork child");
@@ -19,6 +20,9 @@ void runCommand(int commandNum, char* args[]){
     }
     else { //fork succeeded
         if (child == 0) { //currently child
+            //dup2() if we want redirection
+            //https://stackoverflow.com/questions/2605130/redirecting-exec-output-to-a-buffer-or-file
+
             switch (commandNum) {
                 case 0:
                     lsCommand();
@@ -64,6 +68,7 @@ void runCommand(int commandNum, char* args[]){
 int main(){
     welcome();
     char inputString[maxInput];
+    int inputRedirect = 0, outputRedirect = 0;
 
     while (1){
         if (isInputEmpty(inputString))
@@ -76,24 +81,28 @@ int main(){
 
         //otherwise decode user input and run command
 
-        //number of commands that are piped into a single line
-        char* pipeCommands[5]; //max five commands (4 pipes) for now
-        int commandCount;
-        inputDecode(pipeCommands, 5, inputString, &commandCount);
+        //first detect > for output redirection
+        redirection(inputString, &inputRedirect, &outputRedirect);
+        printf("%d %d", inputRedirect, outputRedirect);
 
-        //for each command, parse the arguments
-        for (int i=0; i<commandCount; i++){
-            // printf("%d\t%s\n", i, pipeCommands[i]);
+        // //number of commands that are piped into a single line
+        // char* pipeCommands[5]; //max five commands (4 pipes) for now
+        // int commandCount;
+        // inputDecode(pipeCommands, 5, inputString, &commandCount);
 
-            char* args[5]; //max five arguments for now, example: [touch, mytext.txt]
-            int cmdNum = parseCommand(args, 5, pipeCommands[i]); //is not working when I try with pipes
+        // //for each command, parse the arguments
+        // for (int i=0; i<commandCount; i++){
+        //     // printf("%d\t%s\n", i, pipeCommands[i]);
 
-            // printf("%d\t%s\n", cmdNum, args[0]);
+        //     char* args[5]; //max five arguments for now, example: [touch, mytext.txt]
+        //     int cmdNum = parseCommand(args, 5, pipeCommands[i]); //is not working when I try with pipes
 
-            //we should either fork here... or outside of the for loop?
-            //call the functions using cmdNum and pass any arguments we might have
-            runCommand(cmdNum, args);
-        }
+        //     // printf("%d\t%s\n", cmdNum, args[0]);
+
+        //     //we should either fork here... or outside of the for loop?
+        //     //call the functions using cmdNum and pass any arguments we might have
+        //     runCommand(cmdNum, args, 1, 1, NULL);
+        // }
     }
 
     return 0;

@@ -42,6 +42,24 @@ int isInputEmpty(char *str){
 }
 
 /*
+detect redirection, set int to 1 if true
+*/
+
+void redirection(char* inputString, int* inputRedirect, int* outputRedirect){
+    if (strchr(inputString, '>') != NULL){ //output exists
+        *outputRedirect = 1;
+    } else {
+        *outputRedirect = 0;
+    }
+
+    if (strchr(inputString, '<') != NULL){ //input exists
+        *inputRedirect = 1;
+    } else {
+        *inputRedirect = 0;
+    }
+}
+
+/*
 fill the array with commands separated by pipes and count the number of commands
 note that commandCount is number of pipes + 1
 */
