@@ -140,6 +140,7 @@ int main()
             }
             
             waitpid(pid0, NULL, 0);
+            //done with exec
         }
 
         //1 pipe, 2 commands
@@ -150,84 +151,42 @@ int main()
 
             pipe(pipe1);
             pid0 = fork();
+
+            if (pid0 == -1)
+            {
+                perror("fork failed");
+                exit(EXIT_FAILURE);
+            }
+
+            //run 1st exec and exit
             if (pid0 == 0)
             {
-                // close the read end of pipe1:
-                close(pipe1[0]);
-                // redirect stdout to the write end of pipe1:
-                dup2(pipe1[1], 1);
+                close(pipe1[0]); // close the read end of pipe1
+                dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
                 singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
             }
 
             pid1 = fork();
-            if (pid1 == 0)
+
+            if (pid1 == -1)
             {
-                // close the write end of pipe1:
-                close(pipe1[1]);
-                // redirect stdin to the read end of pipe1:
-                dup2(pipe1[0], 0);
-
-                singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
-
+                perror("fork failed");
+                exit(EXIT_FAILURE);
             }
 
+            //run 2nd exec and exit
+            if (pid1 == 0)
+            {
+                close(pipe1[1]); // close the write end of pipe1
+                dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
+                singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
+            }
 
-            
             close(pipe1[0]);
             close(pipe1[1]);
             waitpid(pid0, NULL, 0);
             waitpid(pid1, NULL, 0);
-            // // Pipes start
-            // int pipefds_1[2];
-            // if (pipe(pipefds_1) == -1)
-            // {
-            //     perror("pipe failed");
-            //     exit(EXIT_FAILURE);
-            // }
-
-            // pid_t pid1 = fork();
-            // if (pid1 == -1)
-            // {
-            //     perror("fork failed");
-            //     exit(EXIT_FAILURE);
-            // }
-
-            // //parent - runs 1st exec
-            // if (pid1 == 0)
-            // {
-            //     dup2(pipefds_1[1], STDOUT_FILENO); //replace stdout with the write end of the pipe
-            //     close(pipefds_1[0]);               //close read to pipe
-            //     singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
-            //     exit(EXIT_SUCCESS);
-            // }
-
-            // else
-            // {
-            //     pid_t pid2 = fork();
-            //     if (pid2 == -1)
-            //     {
-            //         perror("fork failed");
-            //         exit(EXIT_FAILURE);
-            //     }
-
-            //     //child1 - runs 2nd exec
-            //     if (pid2 == 0)
-            //     {
-            //         dup2(pipefds_1[0], STDIN_FILENO); //replace stdin with the read end of the pipe
-            //         close(pipefds_1[1]);              //close write to pipe
-            //         singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
-            //         exit(EXIT_SUCCESS);
-            //     }
-
-            //     //child2 - waits
-            //     else
-            //     {
-            //         close(pipefds_1[0]);
-            //         close(pipefds_1[1]);
-            //         int status;
-            //         waitpid(pid2, &status, 0);
-            //     }
-            // }
+            //done with both exec
         }
 
         else if (commandCount == 3)
