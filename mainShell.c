@@ -39,36 +39,24 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
     char *args[maxArgs];
     int commandNum = parseCommand(args, maxArgs, pipeCommand);
 
+    //-1 means this command is not valid
     if (commandNum == -1)
-    { //-1 means this command is not valid
+    { 
         printf("Command not recognized, please try again\n");
         return;
     }
 
-    // pid_t child = fork();
-    // if (child < 0)
-    // { //fork failed
-    //     perror("Failed fork child");
-    //     exit(EXIT_FAILURE);
-    // }
-    // else
-    // { //fork succeeded
-    //     if (child == 0)
-    //     { //currently child
     //redirection - https://stackoverflow.com/questions/2605130/redirecting-exec-output-to-a-buffer-or-file
-
-    // printf("%s %d %d %d %s\n", args[0], commandNum, inputRedirect, outputRedirect, filename);
     int saved_stdout = dup(1);
     int saved_stdin = dup(0);
 
     if (outputRedirect)
     {
-        // printf("outputRedirect\n");
         FILE *fp;
         fp = fopen(filename, "w+"); // w+ for overwrite
         fclose(fp);
 
-        int fd = open(filename, O_WRONLY); //write
+        int fd = open(filename, O_WRONLY); //write-only
         if (fd == -1)
         {
             perror("open error for outputRedirect");
@@ -81,10 +69,8 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
 
     else if (inputRedirect)
     {
-        // printf("inputRedirect\n");
-
         //if file doesn't exist, we should NOT create it
-        int fd = open(filename, O_RDONLY); //read
+        int fd = open(filename, O_RDONLY); //read-only
         if (fd == -1)
         {
             perror("open error for inputRedirect");
@@ -106,13 +92,6 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
     {
         dup2(saved_stdin, 0);
     }
-
-    //     } //end of child
-    //     else
-    //     { //parent
-    //         wait(NULL);
-    //     }
-    // } //end of fork
 }
 
 int main()
