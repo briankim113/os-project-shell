@@ -1,3 +1,4 @@
 shell
 .vscode/
 *.txt
+!testcases.txt
