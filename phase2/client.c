@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h> 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-
 #include "functions.h"
-#define PORT 9002 //or 8080 or any other unused port value
 
 /*
 prints welcome messages
