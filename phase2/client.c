@@ -9,6 +9,34 @@ void welcome()
     printf("If you wish to exit the shell, use 'exit'\n");
 }
 
+/*
+checks if the user input is all whitespace
+and also replaces the last character from '\n' to '\0'
+*/
+
+int isInputEmpty(char *str){
+    printf("\n>>> ");
+
+    char buf[maxInput];
+    fgets(buf, maxInput, stdin);
+    buf[strlen(buf)-1] = '\0';
+    
+    if (*buf == '\0') { 
+        return 1;
+    }
+    else {
+        char *tmp = buf;
+        while (*tmp != '\0') {
+            if (*tmp != ' ') {
+                strcpy(str, buf);
+                return 0;
+            }
+            tmp++;
+        }
+        return 1;
+    }
+}
+
 int main(){
 
 	//create a socket

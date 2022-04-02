@@ -3,34 +3,6 @@
 char* cmdList[cmdListLen] = {"ls", "pwd", "wc", "ps", "top", "echo", "touch", "less", "grep", "cat"};
 
 /*
-checks if the user input is all whitespace
-and also replaces the last character from '\n' to '\0'
-*/
-
-int isInputEmpty(char *str){
-    printf(">>> ");
-
-    char buf[maxInput];
-    fgets(buf, maxInput, stdin);
-    buf[strlen(buf)-1] = '\0';
-    
-    if (*buf == '\0') { 
-        return 1;
-    }
-    else {
-        char *tmp = buf;
-        while (*tmp != '\0') {
-            if (*tmp != ' ') {
-                strcpy(str, buf);
-                return 0;
-            }
-            tmp++;
-        }
-        return 1;
-    }
-}
-
-/*
 strip leading and trailing whitespaces
 for stripLeadWhiteSpace, we need to pass the actual & to the char*, hence char**
 for stripTrailWhiteSpace, we simply pass char*
