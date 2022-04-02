@@ -1,5 +1,78 @@
 #include "functions.h"
 
+void switchCommand(int, char*[]);
+void singleCommand(char*, int, int, char*);
+void shell(char*, int*, int*, char*);
+
+int main()
+{
+    //create socket
+    int server_socket;
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+    //check for fail error
+    if (server_socket == -1)
+    {
+        printf("socket creation failed..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    //define server address structure
+    struct sockaddr_in server_address;
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(PORT);
+    server_address.sin_addr.s_addr = INADDR_ANY;
+
+    //bind the socket to our specified IP and port
+    if (bind(server_socket,
+             (struct sockaddr *)&server_address,
+             sizeof(server_address)) < 0)
+    {
+        printf("socket bind failed..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    //after it is bound, we can listen for connections
+    if (listen(server_socket, 5) < 0)
+    {
+        printf("Listen failed..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int addrlen = sizeof(server_address);
+
+    int client_socket;
+
+    client_socket = accept(server_socket,
+                           (struct sockaddr *)&server_address,
+                           (socklen_t *)&addrlen);
+
+    if (client_socket < 0)
+    {
+        printf("accept failed..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (1)
+    {
+        char inputString[maxInput];
+        char filename[maxInput];
+        int inputRedirect = 0, outputRedirect = 0;
+
+        recv(client_socket, &inputString, sizeof(inputString), 0);
+
+        //run the shell script
+        shell(inputString, &inputRedirect, &outputRedirect, filename);
+
+        //send the result back to client *********** TO-DO
+        // char hello_back_msg[] = "Hello back\n";
+        // send(client_socket, hello_back_msg, sizeof(hello_back_msg), 0);
+    }
+
+    close(server_socket);
+    return 0;
+}
+
 /*
 checks the commandNum and calls the appropriate single command with args
 */
@@ -105,6 +178,7 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
         dup2(saved_stdin, 0);
     }
 }
+
 
 void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *filename)
 {
@@ -348,73 +422,4 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         printf("Too many piped commands, please limit to 3 pipes\n");
         // continue;
     }
-}
-
-int main()
-{
-    //create socket
-    int server_socket;
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-    //check for fail error
-    if (server_socket == -1)
-    {
-        printf("socket creation failed..\n");
-        exit(EXIT_FAILURE);
-    }
-
-    //define server address structure
-    struct sockaddr_in server_address;
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(PORT);
-    server_address.sin_addr.s_addr = INADDR_ANY;
-
-    //bind the socket to our specified IP and port
-    if (bind(server_socket,
-             (struct sockaddr *)&server_address,
-             sizeof(server_address)) < 0)
-    {
-        printf("socket bind failed..\n");
-        exit(EXIT_FAILURE);
-    }
-
-    //after it is bound, we can listen for connections
-    if (listen(server_socket, 5) < 0)
-    {
-        printf("Listen failed..\n");
-        exit(EXIT_FAILURE);
-    }
-
-    int addrlen = sizeof(server_address);
-
-    int client_socket;
-
-    client_socket = accept(server_socket,
-                           (struct sockaddr *)&server_address,
-                           (socklen_t *)&addrlen);
-
-    if (client_socket < 0)
-    {
-        printf("accept failed..\n");
-        exit(EXIT_FAILURE);
-    }
-
-    while (1)
-    {
-        char inputString[maxInput];
-        char filename[maxInput];
-        int inputRedirect = 0, outputRedirect = 0;
-
-        recv(client_socket, &inputString, sizeof(inputString), 0);
-
-        //run the shell script
-        shell(inputString, &inputRedirect, &outputRedirect, filename);
-
-        //send the result back to client *********** TO-DO
-        // char hello_back_msg[] = "Hello back\n";
-        // send(client_socket, hello_back_msg, sizeof(hello_back_msg), 0);
-    }
-
-    close(server_socket);
-    return 0;
 }
