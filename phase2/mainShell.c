@@ -432,7 +432,7 @@ char* shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fi
 
     else //commandCount is not modified from inputDecode and is still 0
     {
-        *sendmsg = "Too many piped commands, please limit to 3 pipes\n";
+        strcpy(sendmsg, "Too many piped commands, please limit to 3 pipes\n");
     }
 
     return sendmsg;
