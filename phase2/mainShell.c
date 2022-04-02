@@ -17,6 +17,11 @@ int main()
         exit(EXIT_FAILURE);
     }
 
+    //reuse addr to address bind failure
+	if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0){
+    	printf("setsockopt(SO_REUSEADDR) failed\n");
+	}
+
     //define server address structure
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
