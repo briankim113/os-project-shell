@@ -18,7 +18,6 @@
 #define PORT 9002 //or 8080 or any other unused port value
 
 //inputHandling.c
-int isInputEmpty(char*);
 void redirection(char*, int*, int*, char*);
 void inputDecode(char* [], size_t, char*, int*);
 int parseCommand(char* [], size_t, char*);
