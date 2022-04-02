@@ -1,7 +1,7 @@
 #include "functions.h"
 
 void switchCommand(int, char*[]);
-void singleCommand(char*, int, int, char*);
+void singleCommand(char*, int, int, char*, char*);
 void shell(char*, int*, int*, char*, char*);
 
 int main()
@@ -124,15 +124,14 @@ void switchCommand(int commandNum, char *args[])
 run the appropriate command
 intputRedirect / outputRedirect: 1 if true, 0 if false
 */
-void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, char *filename)
+void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, char *filename, char* sendmsg)
 {
     char *args[maxArgs];
     int commandNum = parseCommand(args, maxArgs, pipeCommand);
 
     //-1 means this command is not valid
-    if (commandNum == -1)
-    {
-        printf("Command not recognized, please try again\n");
+    if (commandNum == -1){
+        strcpy(sendmsg, "Command not recognized, please try again\n");
         return;
     }
 
@@ -199,7 +198,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     /*******************
     we will go through the commands and figure out what msg we need to send back to client
     *******************/
-    // char sendmsg[maxInput];
+    bzero(sendmsg, sizeof(char)*maxInput);
 
     //we only have a single command - this is the only case where we do input/output redirection
     if (commandCount == 1)
@@ -219,14 +218,15 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         {
             close(sendpipe[0]);   // close the read end of sendpipe
             dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
-            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         waitpid(pid0, NULL, 0);
         //done with exec
 
         close(sendpipe[1]); //close the write end of sendpipe
-        read(sendpipe[0], sendmsg, sizeof(sendmsg)); //read from the read end of sendpipe
+        read(sendpipe[0], sendmsg, sizeof(char)*maxInput); //read from the read end of sendpipe
+        printf("%s\n", sendmsg);
     }
 
     //TO-DO *********************** sendpipe from here
@@ -250,7 +250,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         {
             close(pipe1[0]);   // close the read end of pipe1
             dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         pid1 = fork();
@@ -266,7 +266,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         {
             close(pipe1[1]);   // close the write end of pipe1
             dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
-            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         close(pipe1[0]);
@@ -295,7 +295,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         {
             close(pipe1[0]);   // close the read end of pipe1
             dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         pipe(pipe2);
@@ -314,7 +314,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
             close(pipe2[0]);   // close the read end of pipe2
             dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
             dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
-            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         pid2 = fork();
@@ -332,7 +332,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
             close(pipe1[1]);
             close(pipe2[1]);   // close the write end of pipe2
             dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
-            singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         close(pipe1[0]);
@@ -363,7 +363,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         {
             close(pipe1[0]);   // close the read end of pipe1
             dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         pipe(pipe2);
@@ -381,7 +381,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
             close(pipe2[0]);   // close the read end of pipe2
             dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
             dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
-            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         pipe(pipe3);
@@ -401,7 +401,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
             close(pipe3[0]);   // close the read end of pipe3
             dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
             dup2(pipe3[1], 1); // redirect stdout to the write end of pipe3
-            singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         pid3 = fork();
@@ -420,7 +420,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
             close(pipe2[1]);
             close(pipe3[1]);   // close the write end of pipe3
             dup2(pipe3[0], 0); // redirect stdin to the read end of pipe3
-            singleCommand(pipeCommands[3], *inputRedirect, *outputRedirect, filename);
+            singleCommand(pipeCommands[3], *inputRedirect, *outputRedirect, filename, sendmsg);
         }
 
         close(pipe1[0]);
@@ -440,6 +440,8 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     {
         strcpy(sendmsg, "Too many piped commands, please limit to 3 pipes\n");
     }
+
+    
 
     // return sendmsg;
 }
