@@ -2,7 +2,7 @@
 
 void switchCommand(int, char*[]);
 void singleCommand(char*, int, int, char*);
-void shell(char*, int*, int*, char*);
+char* shell(char*, int*, int*, char*);
 
 int main()
 {
@@ -62,11 +62,10 @@ int main()
         recv(client_socket, &inputString, sizeof(inputString), 0);
 
         //run the shell script
-        shell(inputString, &inputRedirect, &outputRedirect, filename);
+        char* sendmsg = shell(inputString, &inputRedirect, &outputRedirect, filename);
 
-        //send the result back to client *********** TO-DO
-        // char hello_back_msg[] = "Hello back\n";
-        // send(client_socket, hello_back_msg, sizeof(hello_back_msg), 0);
+        //send the result back to client
+        send(client_socket, sendmsg, sizeof(sendmsg), 0);
     }
 
     close(server_socket);
@@ -180,7 +179,7 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
 }
 
 
-void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *filename)
+char* shell(char *inputString, int *inputRedirect, int *outputRedirect, char *filename)
 {
     //first detect redirection '<' or '>'
     redirection(inputString, inputRedirect, outputRedirect, filename);
@@ -191,9 +190,17 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
 
     //source for fork() parent-child relationship: https://stackoverflow.com/questions/33884291/pipes-dup2-and-exec
 
+    /*******************
+    we will go through the commands and figure out what msg we need to send back to client
+    *******************/
+    char sendmsg[maxInput];
+
     //we only have a single command - this is the only case where we do input/output redirection
     if (commandCount == 1)
     {
+        int sendpipe[2];
+        pipe(sendpipe);
+
         int pid0 = fork();
         if (pid0 == -1)
         {
@@ -204,13 +211,19 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         //run exec and exit
         if (pid0 == 0)
         {
+            close(sendpipe[0]);   // close the read end of sendpipe
+            dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
             singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
         }
 
         waitpid(pid0, NULL, 0);
         //done with exec
+
+        close(sendpipe[1]); //close the write end of sendpipe
+        read(sendpipe[0], sendmsg, sizeof(sendmsg)); //read from the read end of sendpipe
     }
 
+    //TO-DO *********************** sendpipe from here
     //1 pipe, 2 commands
     else if (commandCount == 2)
     {
@@ -419,7 +432,8 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
 
     else //commandCount is not modified from inputDecode and is still 0
     {
-        printf("Too many piped commands, please limit to 3 pipes\n");
-        // continue;
+        *sendmsg = "Too many piped commands, please limit to 3 pipes\n";
     }
+
+    return sendmsg;
 }
