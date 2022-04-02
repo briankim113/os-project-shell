@@ -1,4 +1,4 @@
-shell
 .vscode/
-*.txt
-!testcases.txt
+phase1/shell
+phase2/client
+phase2/server
