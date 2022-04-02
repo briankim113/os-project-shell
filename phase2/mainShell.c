@@ -2,7 +2,7 @@
 
 void switchCommand(int, char*[]);
 void singleCommand(char*, int, int, char*);
-char* shell(char*, int*, int*, char*);
+void shell(char*, int*, int*, char*, char*);
 
 int main()
 {
@@ -57,12 +57,13 @@ int main()
     {
         char inputString[maxInput];
         char filename[maxInput];
+        char sendmsg[maxInput];
         int inputRedirect = 0, outputRedirect = 0;
 
         recv(client_socket, &inputString, sizeof(inputString), 0);
 
         //run the shell script
-        char* sendmsg = shell(inputString, &inputRedirect, &outputRedirect, filename);
+        shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
 
         //send the result back to client
         send(client_socket, sendmsg, sizeof(sendmsg), 0);
@@ -179,7 +180,7 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
 }
 
 
-char* shell(char *inputString, int *inputRedirect, int *outputRedirect, char *filename)
+void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *filename, char *sendmsg)
 {
     //first detect redirection '<' or '>'
     redirection(inputString, inputRedirect, outputRedirect, filename);
@@ -193,7 +194,7 @@ char* shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fi
     /*******************
     we will go through the commands and figure out what msg we need to send back to client
     *******************/
-    char sendmsg[maxInput];
+    // char sendmsg[maxInput];
 
     //we only have a single command - this is the only case where we do input/output redirection
     if (commandCount == 1)
@@ -432,8 +433,8 @@ char* shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fi
 
     else //commandCount is not modified from inputDecode and is still 0
     {
-        *sendmsg = "Too many piped commands, please limit to 3 pipes\n";
+        sendmsg = "Too many piped commands, please limit to 3 pipes\n";
     }
 
-    return sendmsg;
+    // return sendmsg;
 }
