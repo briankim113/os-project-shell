@@ -1,5 +1,17 @@
 #include "functions.h"
 
+// Socket related Libraries
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <unistd.h>
+
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <netinet/in.h>
+
+#define PORT 9002
+
 /*
 prints welcome messages
 */
@@ -16,17 +28,38 @@ void switchCommand(int commandNum, char *args[])
 {
     switch (commandNum)
     {
-    case 0: lsCommand(args); break;
-    case 1: pwdCommand(args); break;
-    case 2: wcCommand(args); break;
-    case 3: psCommand(args); break;
-    case 4: topCommand(args); break;
-    case 5: echoCommand(args); break;
-    case 6: touchCommand(args); break;
-    case 7: lessCommand(args); break;
-    case 8: grepCommand(args); break;
-    case 9: catCommand(args); break;
-    default: break;
+    case 0:
+        lsCommand(args);
+        break;
+    case 1:
+        pwdCommand(args);
+        break;
+    case 2:
+        wcCommand(args);
+        break;
+    case 3:
+        psCommand(args);
+        break;
+    case 4:
+        topCommand(args);
+        break;
+    case 5:
+        echoCommand(args);
+        break;
+    case 6:
+        touchCommand(args);
+        break;
+    case 7:
+        lessCommand(args);
+        break;
+    case 8:
+        grepCommand(args);
+        break;
+    case 9:
+        catCommand(args);
+        break;
+    default:
+        break;
     }
 }
 
@@ -41,7 +74,7 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
 
     //-1 means this command is not valid
     if (commandNum == -1)
-    { 
+    {
         printf("Command not recognized, please try again\n");
         return;
     }
@@ -94,270 +127,316 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
     }
 }
 
-void shell(char* inputString, int* inputRedirect, int *outputRedirect, char* filename){
+void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *filename)
+{
     //first detect redirection '<' or '>'
-        redirection(inputString, inputRedirect, outputRedirect, filename);
+    redirection(inputString, inputRedirect, outputRedirect, filename);
 
-        char *pipeCommands[maxCmds]; //max four commands (3 pipes)
-        int commandCount = 0;
-        inputDecode(pipeCommands, maxCmds, inputString, &commandCount);
+    char *pipeCommands[maxCmds]; //max four commands (3 pipes)
+    int commandCount = 0;
+    inputDecode(pipeCommands, maxCmds, inputString, &commandCount);
 
-        //source for fork() parent-child relationship: https://stackoverflow.com/questions/33884291/pipes-dup2-and-exec
+    //source for fork() parent-child relationship: https://stackoverflow.com/questions/33884291/pipes-dup2-and-exec
 
-        //we only have a single command - this is the only case where we do input/output redirection
-        if (commandCount == 1)
+    //we only have a single command - this is the only case where we do input/output redirection
+    if (commandCount == 1)
+    {
+        int pid0 = fork();
+        if (pid0 == -1)
         {
-            int pid0 = fork();
-            if (pid0 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
-
-            //run exec and exit
-            if (pid0 == 0)
-            {
-                singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
-            }
-            
-            waitpid(pid0, NULL, 0);
-            //done with exec
+            perror("fork failed");
+            exit(EXIT_FAILURE);
         }
 
-        //1 pipe, 2 commands
-        else if (commandCount == 2)
+        //run exec and exit
+        if (pid0 == 0)
         {
-            int pipe1[2];
-            int pid0, pid1;
-
-            pipe(pipe1);
-            pid0 = fork();
-
-            if (pid0 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
-
-            //run 1st exec and exit
-            if (pid0 == 0)
-            {
-                close(pipe1[0]); // close the read end of pipe1
-                dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-                singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
-            }
-
-            pid1 = fork();
-
-            if (pid1 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
-
-            //run 2nd exec and exit
-            if (pid1 == 0)
-            {
-                close(pipe1[1]); // close the write end of pipe1
-                dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
-                singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
-            }
-
-            close(pipe1[0]);
-            close(pipe1[1]);
-            waitpid(pid0, NULL, 0);
-            waitpid(pid1, NULL, 0);
-            //done with both exec
+            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
         }
 
-        else if (commandCount == 3)
+        waitpid(pid0, NULL, 0);
+        //done with exec
+    }
+
+    //1 pipe, 2 commands
+    else if (commandCount == 2)
+    {
+        int pipe1[2];
+        int pid0, pid1;
+
+        pipe(pipe1);
+        pid0 = fork();
+
+        if (pid0 == -1)
         {
-            int pipe1[2], pipe2[2];
-            int pid0, pid1, pid2;
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
 
-            pipe(pipe1);
-            pid0 = fork();
+        //run 1st exec and exit
+        if (pid0 == 0)
+        {
+            close(pipe1[0]);   // close the read end of pipe1
+            dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
+            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
+        }
 
-            if (pid0 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
+        pid1 = fork();
 
-            //run 1st exec and exit
-            if (pid0 == 0)
-            {
-                close(pipe1[0]); // close the read end of pipe1
-                dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-                singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
-            }
+        if (pid1 == -1)
+        {
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
 
-            pipe(pipe2);
-            pid1 = fork();
+        //run 2nd exec and exit
+        if (pid1 == 0)
+        {
+            close(pipe1[1]);   // close the write end of pipe1
+            dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
+            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
+        }
 
-            if (pid1 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
+        close(pipe1[0]);
+        close(pipe1[1]);
+        waitpid(pid0, NULL, 0);
+        waitpid(pid1, NULL, 0);
+        //done with both exec
+    }
 
-            //run 2nd exec and exit
-            if (pid1 == 0)
-            {
-                close(pipe1[1]); // close the write end of pipe1
-                close(pipe2[0]); // close the read end of pipe2
-                dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
-                dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
-                singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
-            }
+    else if (commandCount == 3)
+    {
+        int pipe1[2], pipe2[2];
+        int pid0, pid1, pid2;
 
-            pid2 = fork();
+        pipe(pipe1);
+        pid0 = fork();
 
-            if (pid2 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
+        if (pid0 == -1)
+        {
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
 
-            //run 3rd exec and exit
-            if (pid2 == 0)
-            {
-                close(pipe1[0]); // close unused pipe1 for both ends
-                close(pipe1[1]); 
-                close(pipe2[1]); // close the write end of pipe2
-                dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
-                singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename);
-            }
-            
-            close(pipe1[0]);
+        //run 1st exec and exit
+        if (pid0 == 0)
+        {
+            close(pipe1[0]);   // close the read end of pipe1
+            dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
+            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
+        }
+
+        pipe(pipe2);
+        pid1 = fork();
+
+        if (pid1 == -1)
+        {
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
+
+        //run 2nd exec and exit
+        if (pid1 == 0)
+        {
+            close(pipe1[1]);   // close the write end of pipe1
+            close(pipe2[0]);   // close the read end of pipe2
+            dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
+            dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
+            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
+        }
+
+        pid2 = fork();
+
+        if (pid2 == -1)
+        {
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
+
+        //run 3rd exec and exit
+        if (pid2 == 0)
+        {
+            close(pipe1[0]); // close unused pipe1 for both ends
             close(pipe1[1]);
-            close(pipe2[0]);
+            close(pipe2[1]);   // close the write end of pipe2
+            dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
+            singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename);
+        }
+
+        close(pipe1[0]);
+        close(pipe1[1]);
+        close(pipe2[0]);
+        close(pipe2[1]);
+        waitpid(pid0, NULL, 0);
+        waitpid(pid1, NULL, 0);
+        waitpid(pid2, NULL, 0);
+        //done with all three exec
+    }
+
+    else if (commandCount == 4)
+    {
+        int pipe1[2], pipe2[2], pipe3[2];
+        int pid0, pid1, pid2, pid3;
+
+        pipe(pipe1);
+        pid0 = fork();
+
+        if (pid0 == -1)
+        {
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pid0 == 0)
+        {
+            close(pipe1[0]);   // close the read end of pipe1
+            dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
+            singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
+        }
+
+        pipe(pipe2);
+        pid1 = fork();
+
+        if (pid1 == -1)
+        {
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pid1 == 0)
+        {
+            close(pipe1[1]);   // close the write end of pipe1
+            close(pipe2[0]);   // close the read end of pipe2
+            dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
+            dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
+            singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
+        }
+
+        pipe(pipe3);
+        pid2 = fork();
+
+        if (pid2 == -1)
+        {
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pid2 == 0)
+        {
+            close(pipe1[0]); // close unused pipe1 for both ends
+            close(pipe1[1]);
+            close(pipe2[1]);   // close the write end of pipe2
+            close(pipe3[0]);   // close the read end of pipe3
+            dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
+            dup2(pipe3[1], 1); // redirect stdout to the write end of pipe3
+            singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename);
+        }
+
+        pid3 = fork();
+
+        if (pid3 == -1)
+        {
+            perror("fork failed");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pid3 == 0)
+        {
+            close(pipe1[0]); // close unused pipe1 for both ends
+            close(pipe1[1]);
+            close(pipe2[0]); // close unused pipe2 for both ends
             close(pipe2[1]);
-            waitpid(pid0, NULL, 0);
-            waitpid(pid1, NULL, 0);
-            waitpid(pid2, NULL, 0);
-            //done with all three exec
+            close(pipe3[1]);   // close the write end of pipe3
+            dup2(pipe3[0], 0); // redirect stdin to the read end of pipe3
+            singleCommand(pipeCommands[3], *inputRedirect, *outputRedirect, filename);
         }
 
-        else if (commandCount == 4)
-        {
-            int pipe1[2], pipe2[2], pipe3[2];
-            int pid0, pid1, pid2, pid3;
+        close(pipe1[0]);
+        close(pipe1[1]);
+        close(pipe2[0]);
+        close(pipe2[1]);
+        close(pipe3[0]);
+        close(pipe3[1]);
+        waitpid(pid0, NULL, 0);
+        waitpid(pid1, NULL, 0);
+        waitpid(pid2, NULL, 0);
+        waitpid(pid3, NULL, 0);
+        //done with all four exec
+    }
 
-            pipe(pipe1);
-            pid0 = fork();
-
-            if (pid0 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
-
-            if (pid0 == 0)
-            {
-                close(pipe1[0]); // close the read end of pipe1
-                dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-                singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
-            }
-
-            pipe(pipe2);
-            pid1 = fork();
-
-            if (pid1 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
-
-            if (pid1 == 0)
-            {
-                close(pipe1[1]); // close the write end of pipe1
-                close(pipe2[0]); // close the read end of pipe2
-                dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
-                dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
-                singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
-            }
-
-            pipe(pipe3);
-            pid2 = fork();
-
-            if (pid2 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
-
-            if (pid2 == 0)
-            {
-                close(pipe1[0]); // close unused pipe1 for both ends
-                close(pipe1[1]);
-                close(pipe2[1]); // close the write end of pipe2
-                close(pipe3[0]); // close the read end of pipe3
-                dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
-                dup2(pipe3[1], 1); // redirect stdout to the write end of pipe3
-                singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename);
-            }
-
-            pid3 = fork();
-
-            if (pid3 == -1)
-            {
-                perror("fork failed");
-                exit(EXIT_FAILURE);
-            }
-
-            if (pid3 == 0)
-            {
-                close(pipe1[0]); // close unused pipe1 for both ends
-                close(pipe1[1]);
-                close(pipe2[0]); // close unused pipe2 for both ends
-                close(pipe2[1]);
-                close(pipe3[1]); // close the write end of pipe3
-                dup2(pipe3[0], 0); // redirect stdin to the read end of pipe3
-                singleCommand(pipeCommands[3], *inputRedirect, *outputRedirect, filename);
-            }
-
-            close(pipe1[0]);
-            close(pipe1[1]);
-            close(pipe2[0]);
-            close(pipe2[1]);
-            close(pipe3[0]);
-            close(pipe3[1]);
-            waitpid(pid0, NULL, 0);
-            waitpid(pid1, NULL, 0);
-            waitpid(pid2, NULL, 0);
-            waitpid(pid3, NULL, 0);
-            //done with all four exec
-        }
-
-        else //commandCount is not modified from inputDecode and is still 0
-        {
-            printf("Too many piped commands, please limit to 3 pipes\n");
-            // continue;
-        }
+    else //commandCount is not modified from inputDecode and is still 0
+    {
+        printf("Too many piped commands, please limit to 3 pipes\n");
+        // continue;
+    }
 }
 
 int main()
 {
-    welcome();
-    char inputString[maxInput];
-    char filename[maxInput];
-    int inputRedirect = 0, outputRedirect = 0;
+    //create socket
+    int server_socket;
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+    //check for fail error
+    if (server_socket == -1)
+    {
+        printf("socket creation failed..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    //define server address structure
+    struct sockaddr_in server_address;
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(PORT);
+    server_address.sin_addr.s_addr = INADDR_ANY;
+
+    //bind the socket to our specified IP and port
+    if (bind(server_socket,
+             (struct sockaddr *)&server_address,
+             sizeof(server_address)) < 0)
+    {
+        printf("socket bind failed..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    //after it is bound, we can listen for connections
+    if (listen(server_socket, 5) < 0)
+    {
+        printf("Listen failed..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int addrlen = sizeof(server_address);
+
+    int client_socket;
+
+    client_socket = accept(server_socket,
+                           (struct sockaddr *)&server_address,
+                           (socklen_t *)&addrlen);
+
+    if (client_socket < 0)
+    {
+        printf("accept failed..\n");
+        exit(EXIT_FAILURE);
+    }
 
     while (1)
     {
-        if (isInputEmpty(inputString))
-            continue; //continue asking for actual input
+        char inputString[maxInput];
+        char filename[maxInput];
+        int inputRedirect = 0, outputRedirect = 0;
 
-        if (strcmp(inputString, "exit") == 0)
-        {
-            printf("goodbye!\n");
-            break; //stop the shell
-        }
+        recv(client_socket, &inputString, sizeof(inputString), 0);
 
+        //run the shell script
         shell(inputString, &inputRedirect, &outputRedirect, filename);
-        //otherwise decode user input and run command
+
+        //send "hello back" to client
+        char hello_back_msg[] = "Hello back\n";
+        send(client_socket, hello_back_msg, sizeof(hello_back_msg), 0);
+        //close the socket}
     }
 
+    close(server_socket);
     return 0;
 }
