@@ -140,9 +140,9 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
 
     //-1 means this command is not valid
     if (commandNum == -1){
-        strcpy(sendmsg, "Command not recognized, please try again\n");
-        // exit(EXIT_FAILURE);
-        return;
+        // strcpy(sendmsg, "Command not recognized, please try again\n");
+        exit(EXIT_FAILURE);
+        // return;
     }
 
     //redirection - https://stackoverflow.com/questions/2605130/redirecting-exec-output-to-a-buffer-or-file
