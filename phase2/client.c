@@ -1,13 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> 
-
 #include <sys/socket.h>
 #include <sys/types.h>
-
 #include <netinet/in.h>
 
+#include "functions.h"
 #define PORT 9002 //or 8080 or any other unused port value
+
+/*
+prints welcome messages
+*/
+void welcome()
+{
+    printf("Welcome to the main shell!\n");
+    printf("If you wish to exit the shell, use 'exit'\n");
+}
 
 int main(){
 
@@ -43,45 +51,38 @@ int main(){
 		exit(EXIT_FAILURE);
 	}
 	
+    welcome();
+    char inputString[maxInput];
+    char response[maxInput]; //TO-DO ************************* how do I know how long the output will be?
 
-	//now that we have the connect, we either send or receive data
+    while (1)
+    {
+        //get the user input and save it inside inputString
+        if (isInputEmpty(inputString))
+            continue; //if empty, continue asking for actual input
 
-    //send "hello" message
-    char hello_msg[]="hello\n";
-    send(network_socket , hello_msg , sizeof(hello_msg),0);
+        //if "exit", then stop the shell
+        if (strcmp(inputString, "exit") == 0)
+        {
+            printf("goodbye!\n");
+            break;
+        }
 
-	//receive "hello back" from server
-	char hello_back_msg[1024];
-	recv(network_socket , &hello_back_msg , sizeof(hello_back_msg),0);
+        //send the input without any cleaning to the server directly, where it will be handled
+        if (send(network_socket, inputString, sizeof(inputString), 0) <= 0){
+            perror("send error ");
+        }
 
-	//print out the data we get back
-	printf("Received: %s\n" , hello_back_msg);
+        //receive response back from the server
+        if (recv(network_socket, response, sizeof(response), 0) <= 0){
+            perror("recv error ");
+        }
 
-
-	//Read array of integers from user and send it to server
-	int size;
-	printf("\nPlease enter the size of the array:\n");
-	scanf("%d",&size);
-	printf("\nPlease enter %d numbers:\n",size);
-	int arr[size];
-	for(int i=0;i<size;i++){
-	  scanf("%d",&arr[i]);
-	}
-
-	//send array to server
-	send(network_socket, arr, sizeof(int) * size,0);
-
-	//receive sum of aray elements from server
-	int received_sum;
-	recv(network_socket , &received_sum , sizeof(int),0);
-
-	printf("\nClient received Sum= %d\n",received_sum);
-
+        //print the response
+        printf("%s\n", response);
+    }
 
 	//close socket after we are done
 	close(network_socket);
-
-
-
 	return 0;
 }
