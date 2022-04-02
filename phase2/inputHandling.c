@@ -8,7 +8,7 @@ and also replaces the last character from '\n' to '\0'
 */
 
 int isInputEmpty(char *str){
-    printf("\n>>> ");
+    printf(">>> ");
 
     char buf[maxInput];
     fgets(buf, maxInput, stdin);
