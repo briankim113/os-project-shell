@@ -94,28 +94,9 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
     }
 }
 
-int main()
-{
-    welcome();
-    char inputString[maxInput];
-    char filename[maxInput];
-    int inputRedirect = 0, outputRedirect = 0;
-
-    while (1)
-    {
-        if (isInputEmpty(inputString))
-            continue; //continue asking for actual input
-
-        if (strcmp(inputString, "exit") == 0)
-        {
-            printf("goodbye!\n");
-            break; //stop the shell
-        }
-
-        //otherwise decode user input and run command
-
-        //first detect redirection '<' or '>'
-        redirection(inputString, &inputRedirect, &outputRedirect, filename);
+void shell(char* inputString, int* inputRedirect, int *outputRedirect, char* filename){
+    //first detect redirection '<' or '>'
+        redirection(inputString, inputRedirect, outputRedirect, filename);
 
         char *pipeCommands[maxCmds]; //max four commands (3 pipes)
         int commandCount = 0;
@@ -136,7 +117,7 @@ int main()
             //run exec and exit
             if (pid0 == 0)
             {
-                singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
             }
             
             waitpid(pid0, NULL, 0);
@@ -163,7 +144,7 @@ int main()
             {
                 close(pipe1[0]); // close the read end of pipe1
                 dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-                singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
             }
 
             pid1 = fork();
@@ -179,7 +160,7 @@ int main()
             {
                 close(pipe1[1]); // close the write end of pipe1
                 dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
-                singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
             }
 
             close(pipe1[0]);
@@ -208,7 +189,7 @@ int main()
             {
                 close(pipe1[0]); // close the read end of pipe1
                 dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-                singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
             }
 
             pipe(pipe2);
@@ -227,7 +208,7 @@ int main()
                 close(pipe2[0]); // close the read end of pipe2
                 dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
                 dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
-                singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
             }
 
             pid2 = fork();
@@ -245,7 +226,7 @@ int main()
                 close(pipe1[1]); 
                 close(pipe2[1]); // close the write end of pipe2
                 dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
-                singleCommand(pipeCommands[2], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename);
             }
             
             close(pipe1[0]);
@@ -276,7 +257,7 @@ int main()
             {
                 close(pipe1[0]); // close the read end of pipe1
                 dup2(pipe1[1], 1); // redirect stdout to the write end of pipe1
-                singleCommand(pipeCommands[0], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename);
             }
 
             pipe(pipe2);
@@ -294,7 +275,7 @@ int main()
                 close(pipe2[0]); // close the read end of pipe2
                 dup2(pipe1[0], 0); // redirect stdin to the read end of pipe1
                 dup2(pipe2[1], 1); // redirect stdout to the write end of pipe2
-                singleCommand(pipeCommands[1], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[1], *inputRedirect, *outputRedirect, filename);
             }
 
             pipe(pipe3);
@@ -314,7 +295,7 @@ int main()
                 close(pipe3[0]); // close the read end of pipe3
                 dup2(pipe2[0], 0); // redirect stdin to the read end of pipe2
                 dup2(pipe3[1], 1); // redirect stdout to the write end of pipe3
-                singleCommand(pipeCommands[2], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[2], *inputRedirect, *outputRedirect, filename);
             }
 
             pid3 = fork();
@@ -333,7 +314,7 @@ int main()
                 close(pipe2[1]);
                 close(pipe3[1]); // close the write end of pipe3
                 dup2(pipe3[0], 0); // redirect stdin to the read end of pipe3
-                singleCommand(pipeCommands[3], inputRedirect, outputRedirect, filename);
+                singleCommand(pipeCommands[3], *inputRedirect, *outputRedirect, filename);
             }
 
             close(pipe1[0]);
@@ -352,8 +333,30 @@ int main()
         else //commandCount is not modified from inputDecode and is still 0
         {
             printf("Too many piped commands, please limit to 3 pipes\n");
-            continue;
+            // continue;
         }
+}
+
+int main()
+{
+    welcome();
+    char inputString[maxInput];
+    char filename[maxInput];
+    int inputRedirect = 0, outputRedirect = 0;
+
+    while (1)
+    {
+        if (isInputEmpty(inputString))
+            continue; //continue asking for actual input
+
+        if (strcmp(inputString, "exit") == 0)
+        {
+            printf("goodbye!\n");
+            break; //stop the shell
+        }
+
+        shell(inputString, &inputRedirect, &outputRedirect, filename);
+        //otherwise decode user input and run command
     }
 
     return 0;
