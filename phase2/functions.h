@@ -7,12 +7,15 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 //variables
-#define maxInput 150
+#define maxInput 4096
 #define cmdListLen 10
 #define maxCmds 5
 #define maxArgs 5
+#define PORT 9002 //or 8080 or any other unused port value
 
 //inputHandling.c
 int isInputEmpty(char*);

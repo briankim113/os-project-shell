@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h> 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-
 #include "functions.h"
-#define PORT 9002 //or 8080 or any other unused port value
 
 /*
 prints welcome messages
@@ -50,11 +42,13 @@ int main(){
 		printf("There was an error making a connection to the remote socket \n\n");
 		exit(EXIT_FAILURE);
 	}
+
+    //********** shell begins here ****************
 	
     welcome();
     char inputString[maxInput];
-    char response[maxInput]; //TO-DO ************************* how do I know how long the output will be?
-
+    char response[maxInput]; //with TCP & SOCK_STREAM, buffer size for recv doesn't seem to matter anyway - https://stackoverflow.com/questions/2862071/how-large-should-my-recv-buffer-be-when-calling-recv-in-the-socket-library
+    
     while (1)
     {
         //get the user input and save it inside inputString
