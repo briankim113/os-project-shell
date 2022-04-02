@@ -1,26 +1,5 @@
 #include "functions.h"
 
-// Socket related Libraries
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <unistd.h>
-
-#include <sys/socket.h>
-#include <sys/types.h>
-
-#include <netinet/in.h>
-
-#define PORT 9002
-
-/*
-prints welcome messages
-*/
-void welcome()
-{
-    printf("Welcome to the main shell!\n");
-    printf("If you wish to exit the shell, use 'exit'\n");
-}
-
 /*
 checks the commandNum and calls the appropriate single command with args
 */
@@ -431,10 +410,9 @@ int main()
         //run the shell script
         shell(inputString, &inputRedirect, &outputRedirect, filename);
 
-        //send "hello back" to client
-        char hello_back_msg[] = "Hello back\n";
-        send(client_socket, hello_back_msg, sizeof(hello_back_msg), 0);
-        //close the socket}
+        //send the result back to client *********** TO-DO
+        // char hello_back_msg[] = "Hello back\n";
+        // send(client_socket, hello_back_msg, sizeof(hello_back_msg), 0);
     }
 
     close(server_socket);
