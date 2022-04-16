@@ -4,6 +4,26 @@ void switchCommand(int, char*[]);
 void singleCommand(char*, int, int, char*, char*);
 void shell(char*, int*, int*, char*, char*);
 
+void* foo(void * arg){
+    int client_socket = * (int *) arg;
+    while (1) {
+        char inputString[maxInput];
+        char filename[maxInput];
+        char sendmsg[maxInput];
+        int inputRedirect = 0, outputRedirect = 0;
+
+        recv(client_socket, &inputString, sizeof(inputString), 0);
+
+        //run the shell script
+        shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
+
+        //send the result back to client
+        send(client_socket, sendmsg, sizeof(sendmsg), 0);
+    }
+    close(client_socket);
+    return NULL;
+}
+
 int main()
 {
     //create socket
@@ -15,7 +35,7 @@ int main()
     {
         printf("socket creation failed..\n");
         exit(EXIT_FAILURE);
-    }else{
+    } else {
         printf("socket creation success\n");
     }
 
@@ -37,7 +57,7 @@ int main()
     {
         printf("socket bind failed..\n");
         exit(EXIT_FAILURE);
-    }else{
+    } else {
         printf("socket bind success\n");
     }
 
@@ -46,40 +66,29 @@ int main()
     {
         printf("Listen failed..\n");
         exit(EXIT_FAILURE);
-    }else{
+    } else {
         printf("socket listen success\n");
     }
 
-    int addrlen = sizeof(server_address);
+    //after listen, we need a while loop so we can create multithreading
 
-    int client_socket;
+    while (1) {
+        int addrlen = sizeof(server_address);
+        int client_socket = accept(server_socket,
+                            (struct sockaddr *)&server_address,
+                            (socklen_t *)&addrlen);
+        if (client_socket < 0) {
+            printf("accept failed..\n");
+            exit(EXIT_FAILURE);
+        } else {
+            printf("socket accept success\n");
+        }
 
-    client_socket = accept(server_socket,
-                           (struct sockaddr *)&server_address,
-                           (socklen_t *)&addrlen);
+        pthread_t t_id1;
+        pthread_create(&t_id1, NULL, foo, &client_socket);
 
-    if (client_socket < 0)
-    {
-        printf("accept failed..\n");
-        exit(EXIT_FAILURE);
-    }else{
-        printf("socket accept success\n");
-    }
-
-    while (1)
-    {
-        char inputString[maxInput];
-        char filename[maxInput];
-        char sendmsg[maxInput];
-        int inputRedirect = 0, outputRedirect = 0;
-
-        recv(client_socket, &inputString, sizeof(inputString), 0);
-
-        //run the shell script
-        shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
-
-        //send the result back to client
-        send(client_socket, sendmsg, sizeof(sendmsg), 0);
+        //join is not necessary due to concurrency
+        //close(client_sd) is done inside the thread function
     }
 
     printf("server_socket closing...\n");
