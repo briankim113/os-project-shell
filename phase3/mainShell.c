@@ -68,7 +68,7 @@ int main()
         printf("socket bind success\n");
     }
 
-    //after it is bound, we can listen for connections
+    //after it is bound, we can listen for connections up to 5, given as a parameter
     if (listen(server_socket, 5) < 0)
     {
         printf("Listen failed..\n");
@@ -78,6 +78,7 @@ int main()
     }
 
     //after listen, we need a while loop so we can create multithreading
+    //https://stackoverflow.com/questions/55753640/proper-way-to-accept-multiple-clients
 
     while (1) {
         int addrlen = sizeof(server_address);
@@ -101,7 +102,7 @@ int main()
     //we should really never reach here because server continues to run until we forcefully terminate
     printf("server_socket closing...\n");
     close(server_socket);
-    
+
     return 0;
 }
 
@@ -257,7 +258,6 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         // printf("%s\n", sendmsg);
     }
 
-    //TO-DO *********************** sendpipe from here
     //1 pipe, 2 commands
     else if (commandCount == 2)
     {
@@ -492,7 +492,4 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         strcpy(sendmsg, "Too many piped commands, please limit to 3 pipes\n");
     }
 
-    
-
-    // return sendmsg;
 }
