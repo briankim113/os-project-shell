@@ -10,3 +10,6 @@ phase2/client
 phase2/server
 phase2/shell
 phase2/*.txt
+
+phase3/client
+phase3/server
