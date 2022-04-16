@@ -12,14 +12,21 @@ void* foo(void * arg){
         char sendmsg[maxInput];
         int inputRedirect = 0, outputRedirect = 0;
 
-        recv(client_socket, &inputString, sizeof(inputString), 0);
+        //if we receive proper instructions to our server, instead of signal interrupt
+        if (recv(client_socket, &inputString, sizeof(inputString), 0)) {
+            //run the shell script
+            shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
 
-        //run the shell script
-        shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
+            //send the result back to client
+            send(client_socket, sendmsg, sizeof(sendmsg), 0);
+        }
 
-        //send the result back to client
-        send(client_socket, sendmsg, sizeof(sendmsg), 0);
+        //signal interrupt
+        else {
+            break;
+        }
     }
+    printf("client socket #%d closing...\n\n", client_socket);
     close(client_socket);
     return NULL;
 }
