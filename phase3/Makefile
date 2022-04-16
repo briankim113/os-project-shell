@@ -1,7 +1,7 @@
 all: server client
 
 server: mainShell.c commands.c inputHandling.c
-	gcc mainShell.c commands.c inputHandling.c -o server
+	gcc mainShell.c commands.c inputHandling.c -o server -lpthread
 
 client: client.c
 	gcc client.c -o client
