@@ -98,8 +98,10 @@ int main()
         //close(client_sd) is done inside the thread function
     }
 
+    //we should really never reach here because server continues to run until we forcefully terminate
     printf("server_socket closing...\n");
     close(server_socket);
+    
     return 0;
 }
 
