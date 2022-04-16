@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 //variables
 #define maxInput 4096
