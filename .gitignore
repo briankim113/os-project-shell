@@ -1,5 +1,11 @@
 .vscode/
+
+phase1/.DS_Store
+phase2/.DS_Store
+phase3/.DS_Store
+
 phase1/shell
+
 phase2/client
 phase2/server
 phase2/shell
