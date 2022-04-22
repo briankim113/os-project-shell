@@ -110,7 +110,7 @@ int main()
         printf("socket bind success\n");
     }
 
-    //after it is bound, we can listen for connections up to 5, given as a parameter
+    //after it is bound, we can listen for connections
     if (listen(server_socket, 5) < 0)
     {
         printf("Listen failed..\n");
