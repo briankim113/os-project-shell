@@ -17,10 +17,10 @@ void *foo(void *arg)
         //if we receive proper instructions to our server, instead of signal interrupt
         if (recv(client_socket, &inputString, sizeof(inputString), 0))
         {
-
             //check if input is executable
-            if (inputString[0] == ".")
+            if (inputString[0] == '.')
             {
+                bzero(sendmsg, sizeof(char) * maxInput);
                 int sendpipe[2];
                 pipe(sendpipe);
 
@@ -36,7 +36,10 @@ void *foo(void *arg)
                 {
                     close(sendpipe[0]);   // close the read end of sendpipe
                     dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
-                    execlp(inputString, NULL);
+
+                    char* lst [] = {inputString, NULL, NULL};
+                    execv(lst[0], lst);
+                    // printf("after execlp\n");
                     perror("executable"); //if we reached here, there is an error so we must exit
                     exit(EXIT_FAILURE);
                     // singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename, sendmsg);
@@ -47,11 +50,12 @@ void *foo(void *arg)
 
                 close(sendpipe[1]);                                  //close the write end of sendpipe
                 read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
-                                                                     // printf("%s\n", sendmsg);
             }
 
             //run the shell script
-            shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
+            else {
+                shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
+            }
 
             //send the result back to client
             send(client_socket, sendmsg, sizeof(sendmsg), 0);
