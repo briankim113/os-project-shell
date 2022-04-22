@@ -1,19 +1,55 @@
 #include "functions.h"
 
-void switchCommand(int, char*[]);
-void singleCommand(char*, int, int, char*, char*);
-void shell(char*, int*, int*, char*, char*);
+void switchCommand(int, char *[]);
+void singleCommand(char *, int, int, char *, char *);
+void shell(char *, int *, int *, char *, char *);
 
-void* foo(void * arg){
-    int client_socket = * (int *) arg;
-    while (1) {
+void *foo(void *arg)
+{
+    int client_socket = *(int *)arg;
+    while (1)
+    {
         char inputString[maxInput];
         char filename[maxInput];
         char sendmsg[maxInput];
         int inputRedirect = 0, outputRedirect = 0;
 
         //if we receive proper instructions to our server, instead of signal interrupt
-        if (recv(client_socket, &inputString, sizeof(inputString), 0)) {
+        if (recv(client_socket, &inputString, sizeof(inputString), 0))
+        {
+
+            //check if input is executable
+            if (inputString[0] == ".")
+            {
+                int sendpipe[2];
+                pipe(sendpipe);
+
+                int pid0 = fork();
+                if (pid0 == -1)
+                {
+                    perror("fork failed");
+                    exit(EXIT_FAILURE);
+                }
+
+                //run exec and exit
+                if (pid0 == 0)
+                {
+                    close(sendpipe[0]);   // close the read end of sendpipe
+                    dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
+                    execlp(inputString, NULL);
+                    perror("executable"); //if we reached here, there is an error so we must exit
+                    exit(EXIT_FAILURE);
+                    // singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename, sendmsg);
+                }
+
+                waitpid(pid0, NULL, 0);
+                //done with exec
+
+                close(sendpipe[1]);                                  //close the write end of sendpipe
+                read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
+                                                                     // printf("%s\n", sendmsg);
+            }
+
             //run the shell script
             shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
 
@@ -22,7 +58,8 @@ void* foo(void * arg){
         }
 
         //signal interrupt
-        else {
+        else
+        {
             break;
         }
     }
@@ -42,14 +79,17 @@ int main()
     {
         printf("socket creation failed..\n");
         exit(EXIT_FAILURE);
-    } else {
+    }
+    else
+    {
         printf("socket creation success\n");
     }
 
     //reuse addr to address bind failure
-	if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0){
-    	printf("setsockopt(SO_REUSEADDR) failed\n");
-	}
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+    {
+        printf("setsockopt(SO_REUSEADDR) failed\n");
+    }
 
     //define server address structure
     struct sockaddr_in server_address;
@@ -64,7 +104,9 @@ int main()
     {
         printf("socket bind failed..\n");
         exit(EXIT_FAILURE);
-    } else {
+    }
+    else
+    {
         printf("socket bind success\n");
     }
 
@@ -73,22 +115,28 @@ int main()
     {
         printf("Listen failed..\n");
         exit(EXIT_FAILURE);
-    } else {
+    }
+    else
+    {
         printf("socket listen success\n");
     }
 
     //after listen, we need a while loop so we can create multithreading
     //https://stackoverflow.com/questions/55753640/proper-way-to-accept-multiple-clients
 
-    while (1) {
+    while (1)
+    {
         int addrlen = sizeof(server_address);
         int client_socket = accept(server_socket,
-                            (struct sockaddr *)&server_address,
-                            (socklen_t *)&addrlen);
-        if (client_socket < 0) {
+                                   (struct sockaddr *)&server_address,
+                                   (socklen_t *)&addrlen);
+        if (client_socket < 0)
+        {
             printf("accept failed..\n");
             exit(EXIT_FAILURE);
-        } else {
+        }
+        else
+        {
             printf("socket accept success\n");
         }
 
@@ -152,13 +200,14 @@ void switchCommand(int commandNum, char *args[])
 run the appropriate command
 intputRedirect / outputRedirect: 1 if true, 0 if false
 */
-void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, char *filename, char* sendmsg)
+void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, char *filename, char *sendmsg)
 {
     char *args[maxArgs];
     int commandNum = parseCommand(args, maxArgs, pipeCommand);
 
     //-1 means this command is not valid
-    if (commandNum == -1){
+    if (commandNum == -1)
+    {
         // strcpy(sendmsg, "Command not recognized, please try again\n");
         exit(EXIT_FAILURE);
         // return;
@@ -212,7 +261,6 @@ void singleCommand(char *pipeCommand, int inputRedirect, int outputRedirect, cha
     }
 }
 
-
 void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *filename, char *sendmsg)
 {
     //first detect redirection '<' or '>'
@@ -227,7 +275,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     /*******************
     we will go through the commands and figure out what msg we need to send back to client
     *******************/
-    bzero(sendmsg, sizeof(char)*maxInput);
+    bzero(sendmsg, sizeof(char) * maxInput);
 
     //we only have a single command - this is the only case where we do input/output redirection
     if (commandCount == 1)
@@ -253,8 +301,8 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         waitpid(pid0, NULL, 0);
         //done with exec
 
-        close(sendpipe[1]); //close the write end of sendpipe
-        read(sendpipe[0], sendmsg, sizeof(char)*maxInput); //read from the read end of sendpipe
+        close(sendpipe[1]);                                  //close the write end of sendpipe
+        read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
         // printf("%s\n", sendmsg);
     }
 
@@ -263,7 +311,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     {
         int pipe1[2];
         int pid0, pid1;
-        
+
         int sendpipe[2];
         pipe(sendpipe);
 
@@ -305,8 +353,8 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
 
         close(pipe1[0]);
         close(pipe1[1]);
-        close(sendpipe[1]); //close the write end of sendpipe
-        read(sendpipe[0], sendmsg, sizeof(char)*maxInput); //read from the read end of sendpipe
+        close(sendpipe[1]);                                  //close the write end of sendpipe
+        read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
         waitpid(pid0, NULL, 0);
         waitpid(pid1, NULL, 0);
         //done with both exec
@@ -316,7 +364,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     {
         int pipe1[2], pipe2[2];
         int pid0, pid1, pid2;
-        
+
         int sendpipe[2];
         pipe(sendpipe);
 
@@ -381,8 +429,8 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         close(pipe1[1]);
         close(pipe2[0]);
         close(pipe2[1]);
-        close(sendpipe[1]); //close the write end of sendpipe
-        read(sendpipe[0], sendmsg, sizeof(char)*maxInput); //read from the read end of sendpipe
+        close(sendpipe[1]);                                  //close the write end of sendpipe
+        read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
         waitpid(pid0, NULL, 0);
         waitpid(pid1, NULL, 0);
         waitpid(pid2, NULL, 0);
@@ -393,7 +441,7 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     {
         int pipe1[2], pipe2[2], pipe3[2];
         int pid0, pid1, pid2, pid3;
-        
+
         int sendpipe[2];
         pipe(sendpipe);
 
@@ -465,8 +513,8 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
             close(pipe1[1]);
             close(pipe2[0]); // close unused pipe2 for both ends
             close(pipe2[1]);
-            close(pipe3[1]);   // close the write end of pipe3
-            dup2(pipe3[0], 0); // redirect stdin to the read end of pipe3
+            close(pipe3[1]);      // close the write end of pipe3
+            dup2(pipe3[0], 0);    // redirect stdin to the read end of pipe3
             close(sendpipe[0]);   // close the read end of sendpipe
             dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
             singleCommand(pipeCommands[3], *inputRedirect, *outputRedirect, filename, sendmsg);
@@ -478,8 +526,8 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
         close(pipe2[1]);
         close(pipe3[0]);
         close(pipe3[1]);
-        close(sendpipe[1]); //close the write end of sendpipe
-        read(sendpipe[0], sendmsg, sizeof(char)*maxInput); //read from the read end of sendpipe
+        close(sendpipe[1]);                                  //close the write end of sendpipe
+        read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
         waitpid(pid0, NULL, 0);
         waitpid(pid1, NULL, 0);
         waitpid(pid2, NULL, 0);
@@ -491,5 +539,4 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     {
         strcpy(sendmsg, "Too many piped commands, please limit to 3 pipes\n");
     }
-
 }
