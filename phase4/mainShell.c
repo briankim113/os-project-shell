@@ -17,10 +17,11 @@ void *foo(void *arg)
         //if we receive proper instructions to our server, instead of signal interrupt
         if (recv(client_socket, &inputString, sizeof(inputString), 0))
         {
+            printf("%s\n", inputString);
+
             //check if input is executable
             if (inputString[0] == '.')
             {
-                printf("%s\n", inputString);
                 bzero(sendmsg, sizeof(char) * maxInput);
                 int sendpipe[2];
                 pipe(sendpipe);
@@ -38,14 +39,18 @@ void *foo(void *arg)
                     close(sendpipe[0]);   // close the read end of sendpipe
                     dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
 
-                    char* programName;
-                    execv(programName, inputString);
-                    // char* lst [] = {programName, NULL, NULL};
-                    // execv(lst[0], lst);
-                    // printf("after execlp\n");
+                    char tmp[maxInput];
+                    strcpy(tmp, inputString);
+                    // printf("%s\t%s\n", tmp, inputString);
+
+                    char* programName = strtok(tmp, " ");
+                    // printf("%s\n", programName);
+
+                    char* lst[] = {inputString, NULL};
+                    execv(programName, lst);
+
                     perror("executable"); //if we reached here, there is an error so we must exit
                     exit(EXIT_FAILURE);
-                    // singleCommand(pipeCommands[0], *inputRedirect, *outputRedirect, filename, sendmsg);
                 }
 
                 waitpid(pid0, NULL, 0);
