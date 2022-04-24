@@ -36,25 +36,44 @@ void *foo(void *arg)
                 //run exec and exit
                 if (pid0 == 0)
                 {
+                    char tmp[maxInput];
+                    strcpy(tmp, inputString);
+
+                    char programName[maxInput];
+                    char* token = strtok(tmp, " ");
+                    strcpy(programName, token);
+
+                    // printf("programName: %s\n", programName);
+
+                    char arg1[maxInput] = ""; //only one argument for now
+                    while (token != NULL) {
+                        // printf("token!=NULL\n");
+                        token = strtok(NULL, " ");
+                        if (token != NULL) {
+                            strcpy(arg1, token);
+                            // printf("%s\n", arg1);
+                        }
+                    }
+
+                    // printf("arg1: %s\n", arg1);
+                    
                     close(sendpipe[0]);   // close the read end of sendpipe
                     dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
 
-                    char tmp[maxInput];
-                    strcpy(tmp, inputString);
-                    // printf("%s\t%s\n", tmp, inputString);
-
-                    char* programName = strtok(tmp, " ");
-                    // printf("%s\n", programName);
-
-                    char* lst[] = {inputString, NULL};
-                    execv(programName, lst);
+                    if (strcmp(arg1, "") == 0) {
+                        // printf("empty arg1\n");
+                        execl(programName, programName, NULL);
+                    } else {
+                        // printf("non-empty arg1\n");
+                        execl(programName, programName, arg1, NULL);
+                    }
 
                     perror("executable"); //if we reached here, there is an error so we must exit
                     exit(EXIT_FAILURE);
                 }
 
-                waitpid(pid0, NULL, 0);
-                //done with exec
+                // waitpid(pid0, NULL, 0);
+                // done with exec - not sure why even when it's commented out, the printf is sent after exec is done
 
                 close(sendpipe[1]);                                  //close the write end of sendpipe
                 read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
