@@ -144,16 +144,18 @@ int main()
             printf("socket accept success\n");
         }
 
-        pthread_t t_id1;
+        pthread_t t_id1;        
 
-        //should set our algorithm policy using pthread_attr_setschedpolicy()
-        //https://man7.org/linux/man-pages/man3/pthread_attr_setschedpolicy.3.html
+        //determine what algorithm policy we want to set
+        //but this is per client when they initially connect, and we want to schedule according to the commands inside the thread?
+        //so should this move inside the runner function?
 
         pthread_attr_t attr;
         pthread_attr_init(&attr); //default attributes
-        pthread_attr_setschedpolicy(&attr, SCHED_FIFO); //SCHED_FIFO, SCHED_RR, SCHED_OTHER
+        pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM); //set scope
+        pthread_attr_setschedpolicy(&attr, SCHED_FIFO); //set policy - https://man7.org/linux/man-pages/man7/sched.7.html
 
-
+        //then go ahead and create
         pthread_create(&t_id1, NULL, foo, &client_socket);
 
         //join is not necessary due to concurrency
