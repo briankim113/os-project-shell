@@ -20,6 +20,7 @@ void *foo(void *arg)
             //check if input is executable
             if (inputString[0] == '.')
             {
+                printf("%s\n", inputString);
                 bzero(sendmsg, sizeof(char) * maxInput);
                 int sendpipe[2];
                 pipe(sendpipe);
@@ -37,8 +38,10 @@ void *foo(void *arg)
                     close(sendpipe[0]);   // close the read end of sendpipe
                     dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
 
-                    char* lst [] = {inputString, NULL, NULL};
-                    execv(lst[0], lst);
+                    char* programName;
+                    execv(programName, inputString);
+                    // char* lst [] = {programName, NULL, NULL};
+                    // execv(lst[0], lst);
                     // printf("after execlp\n");
                     perror("executable"); //if we reached here, there is an error so we must exit
                     exit(EXIT_FAILURE);
