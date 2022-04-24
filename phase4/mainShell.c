@@ -145,6 +145,15 @@ int main()
         }
 
         pthread_t t_id1;
+
+        //should set our algorithm policy using pthread_attr_setschedpolicy()
+        //https://man7.org/linux/man-pages/man3/pthread_attr_setschedpolicy.3.html
+
+        pthread_attr_t attr;
+        pthread_attr_init(&attr); //default attributes
+        pthread_attr_setschedpolicy(&attr, SCHED_FIFO); //SCHED_FIFO, SCHED_RR, SCHED_OTHER
+
+
         pthread_create(&t_id1, NULL, foo, &client_socket);
 
         //join is not necessary due to concurrency
