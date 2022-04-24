@@ -176,6 +176,8 @@ int main()
         //determine what algorithm policy we want to set
         //but this is per client when they initially connect, and we want to schedule according to the commands inside the thread?
         //so should this move inside the runner function?
+        //it seems like this is the right location because if client runs sleep 10, then they should not be able to run another command
+        //therefore each thread (aka client) should be its unique thread that is scheduled inside the algorithm
 
         pthread_attr_t attr;
         pthread_attr_init(&attr); //default attributes
