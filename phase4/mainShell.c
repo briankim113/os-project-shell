@@ -1,8 +1,10 @@
 #include "functions.h"
-
-struct Info {
+#define QUANTUM 2
+struct Info
+{
     int socket;
     int time_left;
+    sem_t sem;
 };
 
 void switchCommand(int, char *[]);
@@ -12,7 +14,8 @@ void *foo(void *);
 void *schedule();
 
 struct Info queue[5]; //max number of client threads - seems fine when we go over?
-int idx = 0; //queue index
+int count = 0;        //queue index
+sem_t clientrunning;
 
 int main()
 {
@@ -91,7 +94,7 @@ int main()
             printf("socket accept success\n");
         }
 
-        pthread_t tid;        
+        pthread_t tid;
         pthread_create(&tid, NULL, foo, &client_socket);
         // pthread_create(&threads[thr_idx++], NULL, foo, &client_socket);
 
@@ -496,15 +499,18 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
 void *schedule()
 {
 
-    sem_t clientrunning;
-    sem_init(&clientrunning, 0, 0); //not SHARED, initial value 0
+    sem_init(&clientrunning, 0, 1); //not SHARED, initial value 1, run through
 
-    for (int i=0; i<5; i++){
-        queue[i].socket = -1; //to initially indicate as NULL
+    for (int i = 0; i < 5; i++)
+    {
+        queue[i].socket = -1;          //to initially indicate as NULL
+        sem_init(&queue[i].sem, 0, 0); //should wait inside client thread
     }
 
-    while (1) {
-        while (idx == 0) ; //infinite wait
+    while (1)
+    {
+        while (count == 0)
+            ; //infinite wait
         printf("passed infinite wait\n");
 
         //only calculate shortest time left if there is no client running
@@ -514,12 +520,15 @@ void *schedule()
         //there is some thread in the queue
         //determine which thread should run, shortest time_left?
         int min_socket, min_idx;
-        int min_time = INT32_MAX;
+        int min_time = __INT32_MAX__;
 
-        for (int i=0; i<5; i++){
-            if (queue[i].socket == -1) continue; //skip
+        for (int i = 0; i < 5; i++)
+        {
+            if (queue[i].socket == -1)
+                continue; //skip
 
-            if (queue[i].time_left < min_time) {
+            if (queue[i].time_left < min_time)
+            {
                 min_time = queue[i].time_left;
                 min_socket = queue[i].socket;
                 min_idx = i;
@@ -530,12 +539,12 @@ void *schedule()
         printf("SRJ socket %d with time %d\n", min_socket, min_time);
 
         //now execute this thread by releasing its semaphore
-        
+        sem_post(&queue[min_idx].sem);
 
         //release lock
         sem_post(&clientrunning);
     }
-    
+
     return 0;
 }
 
@@ -554,12 +563,12 @@ void *foo(void *arg)
         {
 
             //critical section
-            struct Info info;
-            info.socket = client_socket;
-            info.time_left = 10;
+            // struct Info info;
+            // info.socket = client_socket;
+            // info.time_left = 2;
 
-            queue[idx] = info;
-            idx++;
+            // queue[idx] = info;
+            // idx++;
             //critical section
 
             printf("%s\n", inputString);
@@ -585,47 +594,78 @@ void *foo(void *arg)
                     strcpy(tmp, inputString);
 
                     char programName[maxInput];
-                    char* token = strtok(tmp, " ");
+                    char *token = strtok(tmp, " ");
                     strcpy(programName, token);
 
                     // printf("programName: %s\n", programName);
 
                     char arg1[maxInput] = ""; //only one argument for now
-                    while (token != NULL) {
+                    while (token != NULL)
+                    {
                         // printf("token!=NULL\n");
                         token = strtok(NULL, " ");
-                        if (token != NULL) {
+                        if (token != NULL)
+                        {
                             strcpy(arg1, token);
                             // printf("%s\n", arg1);
                         }
                     }
 
                     // printf("arg1: %s\n", arg1);
-                    
+
                     close(sendpipe[0]);   // close the read end of sendpipe
                     dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
 
-                    if (strcmp(arg1, "") == 0) {
-                        // printf("empty arg1\n");
-                        execl(programName, programName, NULL);
-                    } else {
-                        // printf("non-empty arg1\n");
-                        execl(programName, programName, arg1, NULL);
+                    int client_queue_index;
+                    //critical section start
+                    for (int i = 0; i < 5; i++)
+                    {
+                        if (queue[i].socket == -1)
+                        {
+                            queue[i].socket = client_socket;
+                            queue[i].time_left = arg1;
+                            client_queue_index = i;
+                            count++;
+                            break;
+                        }
                     }
+                    //critical section end
+
+                    sem_wait(&queue[client_queue_index].sem);
+
+                    execl(programName, programName, QUANTUM, NULL);
 
                     perror("executable"); //if we reached here, there is an error so we must exit
                     exit(EXIT_FAILURE);
+
+                    // sem_post(&queue[client_queue_index].sem);
                 }
 
                 // waitpid(pid0, NULL, 0);
                 // done with exec - not sure why even when it's commented out, the printf is sent after exec is done
-
+                // if (queue[client_queue_index].time_left == 0)
+                // {
+                //     queue[client_queue_index].socket = -1;
+                // }
                 close(sendpipe[1]);                                  //close the write end of sendpipe
                 read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
             }
-
             //run the shell script
-            else {
+            else
+            {
+                //critical section start
+                for (int i = 0; i < 5; i++)
+                {
+                    if (queue[i].socket == -1)
+                    {
+                        queue[i].socket = client_socket;
+                        queue[i].time_left = 2;
+                        count++;
+                        break;
+                    }
+                }
+                //critical section end
+                //wait for schedule to release lock
                 shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
             }
 
@@ -633,10 +673,8 @@ void *foo(void *arg)
             send(client_socket, sendmsg, sizeof(sendmsg), 0);
 
             //critical section
-            struct Info nullinfo;
-            nullinfo.socket = -1;
-            queue[idx] = nullinfo;
-            idx--;
+            queue[count].socket = -1;
+            count--;
             //critical section
         }
 
