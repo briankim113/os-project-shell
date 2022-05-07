@@ -16,6 +16,7 @@ void *schedule();
 struct Info queue[5]; //max number of client threads - seems fine when we go over?
 int count = 0;        //queue index
 sem_t clientrunning;
+sem_t quemodify;
 
 int main()
 {
@@ -500,6 +501,7 @@ void *schedule()
 {
 
     sem_init(&clientrunning, 0, 1); //not SHARED, initial value 1, run through
+    sem_init(&quemodify, 0, 1);     //not SHARED, initial value 1, run through
 
     for (int i = 0; i < 5; i++)
     {
@@ -618,6 +620,8 @@ void *foo(void *arg)
 
                     int client_queue_index;
                     //critical section start
+
+                    sem_wait(&quemodify);
                     for (int i = 0; i < 5; i++)
                     {
                         if (queue[i].socket == -1)
@@ -629,6 +633,7 @@ void *foo(void *arg)
                             break;
                         }
                     }
+                    sem_post(&quemodify);
                     //critical section end
 
                     sem_wait(&queue[client_queue_index].sem);
@@ -654,6 +659,7 @@ void *foo(void *arg)
             else
             {
                 //critical section start
+                sem_wait(&quemodify);
                 for (int i = 0; i < 5; i++)
                 {
                     if (queue[i].socket == -1)
@@ -664,6 +670,8 @@ void *foo(void *arg)
                         break;
                     }
                 }
+                sem_post(&quemodify);
+
                 //critical section end
                 //wait for schedule to release lock
                 shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
