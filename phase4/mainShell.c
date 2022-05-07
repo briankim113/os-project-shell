@@ -3,101 +3,7 @@
 void switchCommand(int, char *[]);
 void singleCommand(char *, int, int, char *, char *);
 void shell(char *, int *, int *, char *, char *);
-
-void *foo(void *arg)
-{
-    int client_socket = *(int *)arg;
-    while (1)
-    {
-        char inputString[maxInput];
-        char filename[maxInput];
-        char sendmsg[maxInput];
-        int inputRedirect = 0, outputRedirect = 0;
-
-        //if we receive proper instructions to our server, instead of signal interrupt
-        if (recv(client_socket, &inputString, sizeof(inputString), 0))
-        {
-            printf("%s\n", inputString);
-
-            //check if input is executable
-            if (inputString[0] == '.')
-            {
-                bzero(sendmsg, sizeof(char) * maxInput);
-                int sendpipe[2];
-                pipe(sendpipe);
-
-                int pid0 = fork();
-                if (pid0 == -1)
-                {
-                    perror("fork failed");
-                    exit(EXIT_FAILURE);
-                }
-
-                //run exec and exit
-                if (pid0 == 0)
-                {
-                    char tmp[maxInput];
-                    strcpy(tmp, inputString);
-
-                    char programName[maxInput];
-                    char* token = strtok(tmp, " ");
-                    strcpy(programName, token);
-
-                    // printf("programName: %s\n", programName);
-
-                    char arg1[maxInput] = ""; //only one argument for now
-                    while (token != NULL) {
-                        // printf("token!=NULL\n");
-                        token = strtok(NULL, " ");
-                        if (token != NULL) {
-                            strcpy(arg1, token);
-                            // printf("%s\n", arg1);
-                        }
-                    }
-
-                    // printf("arg1: %s\n", arg1);
-                    
-                    close(sendpipe[0]);   // close the read end of sendpipe
-                    dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
-
-                    if (strcmp(arg1, "") == 0) {
-                        // printf("empty arg1\n");
-                        execl(programName, programName, NULL);
-                    } else {
-                        // printf("non-empty arg1\n");
-                        execl(programName, programName, arg1, NULL);
-                    }
-
-                    perror("executable"); //if we reached here, there is an error so we must exit
-                    exit(EXIT_FAILURE);
-                }
-
-                // waitpid(pid0, NULL, 0);
-                // done with exec - not sure why even when it's commented out, the printf is sent after exec is done
-
-                close(sendpipe[1]);                                  //close the write end of sendpipe
-                read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
-            }
-
-            //run the shell script
-            else {
-                shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
-            }
-
-            //send the result back to client
-            send(client_socket, sendmsg, sizeof(sendmsg), 0);
-        }
-
-        //signal interrupt
-        else
-        {
-            break;
-        }
-    }
-    printf("client socket #%d closing...\n\n", client_socket);
-    close(client_socket);
-    return NULL;
-}
+void *foo(void *);
 
 int main()
 {
@@ -583,4 +489,99 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     {
         strcpy(sendmsg, "Too many piped commands, please limit to 3 pipes\n");
     }
+}
+
+void *foo(void *arg)
+{
+    int client_socket = *(int *)arg;
+    while (1)
+    {
+        char inputString[maxInput];
+        char filename[maxInput];
+        char sendmsg[maxInput];
+        int inputRedirect = 0, outputRedirect = 0;
+
+        //if we receive proper instructions to our server, instead of signal interrupt
+        if (recv(client_socket, &inputString, sizeof(inputString), 0))
+        {
+            printf("%s\n", inputString);
+
+            //check if input is executable
+            if (inputString[0] == '.')
+            {
+                bzero(sendmsg, sizeof(char) * maxInput);
+                int sendpipe[2];
+                pipe(sendpipe);
+
+                int pid0 = fork();
+                if (pid0 == -1)
+                {
+                    perror("fork failed");
+                    exit(EXIT_FAILURE);
+                }
+
+                //run exec and exit
+                if (pid0 == 0)
+                {
+                    char tmp[maxInput];
+                    strcpy(tmp, inputString);
+
+                    char programName[maxInput];
+                    char* token = strtok(tmp, " ");
+                    strcpy(programName, token);
+
+                    // printf("programName: %s\n", programName);
+
+                    char arg1[maxInput] = ""; //only one argument for now
+                    while (token != NULL) {
+                        // printf("token!=NULL\n");
+                        token = strtok(NULL, " ");
+                        if (token != NULL) {
+                            strcpy(arg1, token);
+                            // printf("%s\n", arg1);
+                        }
+                    }
+
+                    // printf("arg1: %s\n", arg1);
+                    
+                    close(sendpipe[0]);   // close the read end of sendpipe
+                    dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
+
+                    if (strcmp(arg1, "") == 0) {
+                        // printf("empty arg1\n");
+                        execl(programName, programName, NULL);
+                    } else {
+                        // printf("non-empty arg1\n");
+                        execl(programName, programName, arg1, NULL);
+                    }
+
+                    perror("executable"); //if we reached here, there is an error so we must exit
+                    exit(EXIT_FAILURE);
+                }
+
+                // waitpid(pid0, NULL, 0);
+                // done with exec - not sure why even when it's commented out, the printf is sent after exec is done
+
+                close(sendpipe[1]);                                  //close the write end of sendpipe
+                read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
+            }
+
+            //run the shell script
+            else {
+                shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
+            }
+
+            //send the result back to client
+            send(client_socket, sendmsg, sizeof(sendmsg), 0);
+        }
+
+        //signal interrupt
+        else
+        {
+            break;
+        }
+    }
+    printf("client socket #%d closing...\n\n", client_socket);
+    close(client_socket);
+    return NULL;
 }
