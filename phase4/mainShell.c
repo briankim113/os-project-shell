@@ -1,5 +1,6 @@
 #include "functions.h"
-#define QUANTUM 2
+#define QUANTUM1 2
+#define QUANTUM2 5
 struct Info
 {
     int socket;
@@ -619,6 +620,7 @@ void *foo(void *arg)
                     dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
 
                     int client_queue_index;
+
                     //critical section start
 
                     sem_wait(&quemodify);
@@ -636,14 +638,29 @@ void *foo(void *arg)
                     sem_post(&quemodify);
                     //critical section end
 
-                    sem_wait(&queue[client_queue_index].sem);
+                    //now the program can run but depending on the round and its quantum
+                    int firstround = 1;
+                    while (queue[client_queue_index].time_left > 0) {
+                        sem_wait(&clientrunning);
+                        sem_wait(&queue[client_queue_index].sem);
 
-                    execl(programName, programName, QUANTUM, NULL);
+                        int quant;
+                        if (firstround) {
+                            quant = min(QUANTUM1, queue[client_queue_index].time_left);
+                            firstround = 0;
+                        } else {
+                            quant = min(QUANTUM2, queue[client_queue_index].time_left);
+                        }
+
+                        queue[client_queue_index].time_left -= quant;
+                        execl(programName, programName, quant, NULL);
+                        sem_post(&queue[client_queue_index].sem);
+                        sem_post(&clientrunning);
+                    }
 
                     perror("executable"); //if we reached here, there is an error so we must exit
                     exit(EXIT_FAILURE);
 
-                    // sem_post(&queue[client_queue_index].sem);
                 }
 
                 // waitpid(pid0, NULL, 0);
@@ -674,7 +691,9 @@ void *foo(void *arg)
 
                 //critical section end
                 //wait for schedule to release lock
+                sem_wait(&clientrunning);
                 shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
+                sem_post(&clientrunning);
             }
 
             //send the result back to client
