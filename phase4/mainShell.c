@@ -19,6 +19,11 @@ int count = 0;        //queue index
 sem_t clientrunning;
 sem_t quemodify;
 
+int min(int a, int b)
+{
+    return (a > b) ? b : a;
+}
+
 int main()
 {
     //create socket
@@ -583,84 +588,94 @@ void *foo(void *arg)
                 int sendpipe[2];
                 pipe(sendpipe);
 
-                int pid0 = fork();
-                if (pid0 == -1)
+                char tmp[maxInput];
+                strcpy(tmp, inputString);
+
+                char programName[maxInput];
+                char *token = strtok(tmp, " ");
+                strcpy(programName, token);
+
+                // printf("programName: %s\n", programName);
+
+                char arg1[maxInput] = ""; //only one argument for now
+                while (token != NULL)
                 {
-                    perror("fork failed");
-                    exit(EXIT_FAILURE);
+                    // printf("token!=NULL\n");
+                    token = strtok(NULL, " ");
+                    if (token != NULL)
+                    {
+                        strcpy(arg1, token);
+                        // printf("%s\n", arg1);
+                    }
                 }
 
-                //run exec and exit
-                if (pid0 == 0)
+                int client_queue_index;
+
+                //critical section start
+
+                sem_wait(&quemodify);
+                for (int i = 0; i < 5; i++)
                 {
-                    char tmp[maxInput];
-                    strcpy(tmp, inputString);
-
-                    char programName[maxInput];
-                    char *token = strtok(tmp, " ");
-                    strcpy(programName, token);
-
-                    // printf("programName: %s\n", programName);
-
-                    char arg1[maxInput] = ""; //only one argument for now
-                    while (token != NULL)
+                    if (queue[i].socket == -1)
                     {
-                        // printf("token!=NULL\n");
-                        token = strtok(NULL, " ");
-                        if (token != NULL)
-                        {
-                            strcpy(arg1, token);
-                            // printf("%s\n", arg1);
-                        }
+                        queue[i].socket = client_socket;
+                        queue[i].time_left = atoi(arg1);
+                        client_queue_index = i;
+                        count++;
+                        break;
+                    }
+                }
+                sem_post(&quemodify);
+                //critical section end
+
+                //now the program can run but depending on the round and its quantum
+                int firstround = 1;
+                while (queue[client_queue_index].time_left > 0)
+                {
+                    printf("wait queue sem inside client\n");
+                    sem_wait(&queue[client_queue_index].sem);
+                    printf("wait client running inside client\n");
+                    sem_wait(&clientrunning);
+
+                    int quant;
+                    if (firstround)
+                    {
+                        quant = min(QUANTUM1, queue[client_queue_index].time_left);
+                        firstround = 0;
+                    }
+                    else
+                    {
+                        quant = min(QUANTUM2, queue[client_queue_index].time_left);
                     }
 
-                    // printf("arg1: %s\n", arg1);
+                    queue[client_queue_index].time_left -= quant;
 
-                    close(sendpipe[0]);   // close the read end of sendpipe
-                    dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
-
-                    int client_queue_index;
-
-                    //critical section start
-
-                    sem_wait(&quemodify);
-                    for (int i = 0; i < 5; i++)
+                    int pid0 = fork();
+                    if (pid0 == -1)
                     {
-                        if (queue[i].socket == -1)
-                        {
-                            queue[i].socket = client_socket;
-                            queue[i].time_left = arg1;
-                            client_queue_index = i;
-                            count++;
-                            break;
-                        }
+                        perror("fork failed");
+                        exit(EXIT_FAILURE);
                     }
-                    sem_post(&quemodify);
-                    //critical section end
 
-                    //now the program can run but depending on the round and its quantum
-                    int firstround = 1;
-                    while (queue[client_queue_index].time_left > 0) {
-                        sem_wait(&clientrunning);
-                        sem_wait(&queue[client_queue_index].sem);
+                    //run exec and exit
+                    if (pid0 == 0)
+                    {
+                        printf("inside fork\n");
 
-                        int quant;
-                        if (firstround) {
-                            quant = min(QUANTUM1, queue[client_queue_index].time_left);
-                            firstround = 0;
-                        } else {
-                            quant = min(QUANTUM2, queue[client_queue_index].time_left);
-                        }
+                        // printf("arg1: %s\n", arg1);
 
-                        queue[client_queue_index].time_left -= quant;
+                        close(sendpipe[0]);   // close the read end of sendpipe
+                        dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
+
                         execl(programName, programName, quant, NULL);
-                        sem_post(&queue[client_queue_index].sem);
-                        sem_post(&clientrunning);
+
+                        perror("executable"); //if we reached here, there is an error so we must exit
+                        exit(EXIT_FAILURE);
                     }
-
-                    perror("executable"); //if we reached here, there is an error so we must exit
-                    exit(EXIT_FAILURE);
-
+                    waitpid(pid0, NULL, 0);
+                    printf("post reached\n");
+                    sem_post(&clientrunning);
+                    sem_post(&queue[client_queue_index].sem);
                 }
 
                 // waitpid(pid0, NULL, 0);
