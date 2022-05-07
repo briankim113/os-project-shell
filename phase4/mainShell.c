@@ -70,6 +70,7 @@ int main()
     //after listen, we need a while loop so we can create multithreading
     //https://stackoverflow.com/questions/55753640/proper-way-to-accept-multiple-clients
 
+    //scheduler thread
     pthread_t schedule_t;
     pthread_create(&schedule_t, NULL, schedule, NULL);
 
@@ -494,9 +495,45 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
 
 void *schedule()
 {
+
+    sem_t clientrunning;
+    sem_init(&clientrunning, 0, 0); //not SHARED, initial value 0
+
+    for (int i=0; i<5; i++){
+        queue[i].socket = -1; //to initially indicate as NULL
+    }
+
     while (1) {
         while (idx == 0) ; //infinite wait
-        printf("client thread %d passed a command with time %d\n", queue[idx-1].socket, queue[idx-1].time_left);
+        printf("passed infinite wait\n");
+
+        //only calculate shortest time left if there is no client running
+        sem_wait(&clientrunning);
+        printf("passed sem_wait clientrunning\n");
+
+        //there is some thread in the queue
+        //determine which thread should run, shortest time_left?
+        int min_socket, min_idx;
+        int min_time = INT32_MAX;
+
+        for (int i=0; i<5; i++){
+            if (queue[i].socket == -1) continue; //skip
+
+            if (queue[i].time_left < min_time) {
+                min_time = queue[i].time_left;
+                min_socket = queue[i].socket;
+                min_idx = i;
+            }
+        }
+
+        //we have the socket with the shortest time_left
+        printf("SRJ socket %d with time %d\n", min_socket, min_time);
+
+        //now execute this thread by releasing its semaphore
+        
+
+        //release lock
+        sem_post(&clientrunning);
     }
     
     return 0;
