@@ -1,12 +1,18 @@
 #include "functions.h"
 
+struct Info {
+    int socket;
+    int time_left;
+};
+
 void switchCommand(int, char *[]);
 void singleCommand(char *, int, int, char *, char *);
 void shell(char *, int *, int *, char *, char *);
 void *foo(void *);
+void *schedule();
 
-pthread_t threads[5]; //max number of client threads - seems fine when we go over?
-int thr_idx = 0; //thread index
+struct Info queue[5]; //max number of client threads - seems fine when we go over?
+int idx = 0; //queue index
 
 int main()
 {
@@ -64,6 +70,9 @@ int main()
     //after listen, we need a while loop so we can create multithreading
     //https://stackoverflow.com/questions/55753640/proper-way-to-accept-multiple-clients
 
+    pthread_t schedule_t;
+    pthread_create(&schedule_t, NULL, schedule, NULL);
+
     //main thread - accept connections from new clients
     while (1)
     {
@@ -81,9 +90,9 @@ int main()
             printf("socket accept success\n");
         }
 
-        // pthread_t tid;        
-        // pthread_create(&tid, NULL, foo, &client_socket);
-        pthread_create(&threads[thr_idx++], NULL, foo, &client_socket);
+        pthread_t tid;        
+        pthread_create(&tid, NULL, foo, &client_socket);
+        // pthread_create(&threads[thr_idx++], NULL, foo, &client_socket);
 
         //join is not necessary due to concurrency
         //close(client_sd) is done inside the thread function
@@ -483,6 +492,16 @@ void shell(char *inputString, int *inputRedirect, int *outputRedirect, char *fil
     }
 }
 
+void *schedule()
+{
+    while (1) {
+        while (idx == 0) ; //infinite wait
+        printf("client thread %d passed a command with time %d\n", queue[idx-1].socket, queue[idx-1].time_left);
+    }
+    
+    return 0;
+}
+
 void *foo(void *arg)
 {
     int client_socket = *(int *)arg;
@@ -496,6 +515,16 @@ void *foo(void *arg)
         //if we receive proper instructions to our server, instead of signal interrupt
         if (recv(client_socket, &inputString, sizeof(inputString), 0))
         {
+
+            //critical section
+            struct Info info;
+            info.socket = client_socket;
+            info.time_left = 10;
+
+            queue[idx] = info;
+            idx++;
+            //critical section
+
             printf("%s\n", inputString);
 
             //check if input is executable
@@ -565,6 +594,13 @@ void *foo(void *arg)
 
             //send the result back to client
             send(client_socket, sendmsg, sizeof(sendmsg), 0);
+
+            //critical section
+            struct Info nullinfo;
+            nullinfo.socket = -1;
+            queue[idx] = nullinfo;
+            idx--;
+            //critical section
         }
 
         //signal interrupt
