@@ -5,6 +5,9 @@ void singleCommand(char *, int, int, char *, char *);
 void shell(char *, int *, int *, char *, char *);
 void *foo(void *);
 
+pthread_t threads[5]; //max number of client threads - seems fine when we go over?
+int thr_idx = 0; //thread index
+
 int main()
 {
     //create socket
@@ -61,6 +64,7 @@ int main()
     //after listen, we need a while loop so we can create multithreading
     //https://stackoverflow.com/questions/55753640/proper-way-to-accept-multiple-clients
 
+    //main thread - accept connections from new clients
     while (1)
     {
         int addrlen = sizeof(server_address);
@@ -77,21 +81,9 @@ int main()
             printf("socket accept success\n");
         }
 
-        pthread_t t_id1;        
-
-        //determine what algorithm policy we want to set
-        //but this is per client when they initially connect, and we want to schedule according to the commands inside the thread?
-        //so should this move inside the runner function?
-        //it seems like this is the right location because if client runs sleep 10, then they should not be able to run another command
-        //therefore each thread (aka client) should be its unique thread that is scheduled inside the algorithm
-
-        pthread_attr_t attr;
-        pthread_attr_init(&attr); //default attributes
-        pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM); //set scope
-        pthread_attr_setschedpolicy(&attr, SCHED_FIFO); //set policy - https://man7.org/linux/man-pages/man7/sched.7.html
-
-        //then go ahead and create
-        pthread_create(&t_id1, NULL, foo, &client_socket);
+        // pthread_t tid;        
+        // pthread_create(&tid, NULL, foo, &client_socket);
+        pthread_create(&threads[thr_idx++], NULL, foo, &client_socket);
 
         //join is not necessary due to concurrency
         //close(client_sd) is done inside the thread function

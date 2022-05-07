@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 //variables
 #define maxInput 4096
