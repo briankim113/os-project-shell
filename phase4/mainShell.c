@@ -518,25 +518,24 @@ void *schedule()
 
     int min_idx = -1;
     while (1)
-    {   
+    {
         // int semaphoreValue;
         // sem_getvalue(&queue[min_idx].sem, &semaphoreValue);
         // while (count == 0 || (min_idx==-1 && semaphoreValue==0))
-            ; //infinite wait
+        ; //infinite wait
         // if (semaphoreValue==0){
         //     sem_post(&queue[min_idx].sem);
         // }
         sem_wait(&clientrunning);
-        printf("passed sem_wait clientrunning\n");
-        
+        // printf("passed sem_wait clientrunning\n");
+
         while (count == 0)
             ; //infinite wait
-        printf("passed infinite wait\n");
-        
+        // printf("passed infinite wait\n");
+
         // printf("semafor index#%d : %d\n", min_idx, semaphoreValue);
 
         //only calculate shortest time left if there is no client running
-        
 
         //there is some thread in the queue
         //determine which thread should run, shortest time_left?
@@ -559,24 +558,19 @@ void *schedule()
         sem_post(&quemodify);
 
         //we have the socket with the shortest time_left
-        printf("SRJ socket %d with time %d\n", min_socket, min_time);
+        printf("\nSocket #%d with time %d chosen for execution!\n", min_socket, min_time);
         //release lock
         //now execute this thread by releasing its semaphore
-        
-        
+
         sem_post(&queue[min_idx].sem);
         sem_post(&clientrunning);
         usleep(10);
-        
-        printf("scheduler release clientrunning\n");
-        
 
-        
+        // printf("scheduler release clientrunning\n");
     }
 
     return 0;
 }
-
 
 //client thread
 void *foo(void *arg)
@@ -602,15 +596,15 @@ void *foo(void *arg)
             // idx++;
             //critical section
 
-            printf("%s\n", inputString);
+            // printf("%s\n", inputString);
             int client_queue_index;
 
             //check if input is executable
             if (inputString[0] == '.')
             {
                 bzero(sendmsg, sizeof(char) * maxInput);
-                int sendpipe[2];
-                pipe(sendpipe);
+                // int sendpipe[2];
+                // pipe(sendpipe);
 
                 char tmp[maxInput];
                 strcpy(tmp, inputString);
@@ -632,8 +626,6 @@ void *foo(void *arg)
                         // printf("%s\n", arg1);
                     }
                 }
-
-                
 
                 //critical section start
 
@@ -658,11 +650,9 @@ void *foo(void *arg)
                 {
                     // printf("wait queue sem inside client\n");
                     sem_wait(&queue[client_queue_index].sem);
-                    printf("wait client running inside client\n");
+                    // printf("wait client running inside client\n");
                     sem_wait(&clientrunning);
-                    printf("after wait client\n");
-                    
-                    
+                    // printf("after wait client\n");
 
                     int quant;
                     if (firstround)
@@ -674,7 +664,7 @@ void *foo(void *arg)
                     {
                         quant = min(QUANTUM2, queue[client_queue_index].time_left);
                     }
-
+                    int timeLeft = queue[client_queue_index].time_left;
                     queue[client_queue_index].time_left -= quant;
 
                     int pid0 = fork();
@@ -687,23 +677,35 @@ void *foo(void *arg)
                     //run exec and exit
                     if (pid0 == 0)
                     {
-                        printf("inside fork\n");
+                        // printf("inside fork\n");
 
                         // printf("arg1: %s\n", arg1);
                         // printf(programName);
 
-                        close(sendpipe[0]);   // close the read end of sendpipe
-                        dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
+                        // close(sendpipe[0]);   // close the read end of sendpipe
+                        // dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
 
                         // execl(programName, programName, quant, NULL);
-                        execl("./sleep", "sleep", "2", NULL);
+                        char numBuffer[20];
+                        char iterationsLeftBuffer[20];
+                        char clientSocketBuffer[20];
+                        sprintf(numBuffer, "%d", quant);
+                        sprintf(iterationsLeftBuffer, "%d", timeLeft);
+                        sprintf(clientSocketBuffer, "%d", client_socket);
+                        execl("./sleep", "sleep", numBuffer, clientSocketBuffer, iterationsLeftBuffer, NULL);
 
                         perror("executable"); //if we reached here, there is an error so we must exit
                         exit(EXIT_FAILURE);
                     }
                     waitpid(pid0, NULL, 0);
-                    printf("post reached\n");
+                    // printf("post reached\n");
                     sem_post(&clientrunning);
+                    if (queue[client_queue_index].time_left == 0)
+                    {
+                        queue[client_queue_index].socket = -1;
+                        count--;
+                    }
+                    usleep(10);
                     // sem_post(&queue[client_queue_index].sem);
                 }
 
@@ -713,8 +715,9 @@ void *foo(void *arg)
                 // {
                 //     queue[client_queue_index].socket = -1;
                 // }
-                close(sendpipe[1]);                                  //close the write end of sendpipe
-                read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
+                strcpy(sendmsg, "Complete\n");
+                // close(sendpipe[1]);                                  //close the write end of sendpipe
+                // read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
             }
             //run the shell script
             else
@@ -739,15 +742,16 @@ void *foo(void *arg)
                 sem_wait(&clientrunning);
                 shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
                 // sem_post(&clientrunning);
+                queue[client_queue_index].socket = -1;
+                count--;
             }
 
             //send the result back to client
             send(client_socket, sendmsg, sizeof(sendmsg), 0);
 
             //critical section
-            queue[client_queue_index].socket = -1;
-            count--;
-            printf("count: %d", count);
+
+            // printf("count: %d", count);
             //critical section
         }
 

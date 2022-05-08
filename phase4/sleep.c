@@ -8,17 +8,19 @@ int main(int argc, char* argv[]){
     //     return -1;
     // }
 
-    printf("inside sleep main!\n");
+    printf("Executing program with socket Number: #%s!\n", argv[2]);
 
     char* p;
     long n = strtol(argv[1], &p, 10);
-    printf("%ld\n", n);
-
+    int interactionsLeft = strtol(argv[3], &p, 10);
+    printf("starting from %ld iteractions\n", n);
     for (int i=0; i<n; i++) {
-        printf("sleep: %d iteration\n", i);
         sleep(1);
+        interactionsLeft--;
+        printf("iteration left: %d \n", interactionsLeft);
     }
+    // printf("iteration left: %d \n", interactionsLeft);
 
-    printf("sleep: exit program\n");
+    // printf("sleep: exit program\n");
     return 0;
 }
