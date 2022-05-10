@@ -3,10 +3,6 @@
 #include <unistd.h> //sleep
 
 int main(int argc, char* argv[]){
-    // if (argc != 2) {
-    //     printf("Please provide exactly 2 arguments: program and n\n");
-    //     return -1;
-    // }
 
     printf("\nExecuting program with socket Number: #%s!\n", argv[2]);
 
@@ -19,8 +15,6 @@ int main(int argc, char* argv[]){
         interactionsLeft--;
         printf("iteration left: %d \n", interactionsLeft);
     }
-    // printf("iteration left: %d \n", interactionsLeft);
 
-    // printf("sleep: exit program\n");
     return 0;
 }
