@@ -1,4 +1,4 @@
-all: server client helloworld sleep
+all: server client sleep
 
 server: mainShell.c commands.c inputHandling.c
 	gcc mainShell.c commands.c inputHandling.c -o server -lpthread
@@ -6,11 +6,8 @@ server: mainShell.c commands.c inputHandling.c
 client: client.c
 	gcc client.c -o client
 
-helloworld: helloworld.c
-	gcc helloworld.c -o helloworld
-
 sleep: sleep.c
 	gcc sleep.c -o sleep
 
 clean:
-	rm client server helloworld sleep
+	rm client server sleep
