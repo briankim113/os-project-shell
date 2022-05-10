@@ -14,7 +14,7 @@ void shell(char *, int *, int *, char *, char *);
 void *foo(void *);
 void *schedule();
 
-struct Info queue[5]; //max number of client threads - seems fine when we go over?
+struct Info queue[5]; //max number of client threads
 int count = 0;        //queue index
 sem_t clientrunning;
 sem_t quemodify;
