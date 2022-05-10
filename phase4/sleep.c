@@ -8,12 +8,12 @@ int main(int argc, char* argv[]){
     //     return -1;
     // }
 
-    printf("Executing program with socket Number: #%s!\n", argv[2]);
+    printf("\nExecuting program with socket Number: #%s!\n", argv[2]);
 
     char* p;
     long n = strtol(argv[1], &p, 10);
     int interactionsLeft = strtol(argv[3], &p, 10);
-    printf("starting from %ld iteractions\n", n);
+    printf("starting from %d iterations\n", interactionsLeft);
     for (int i=0; i<n; i++) {
         sleep(1);
         interactionsLeft--;

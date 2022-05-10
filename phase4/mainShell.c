@@ -519,23 +519,13 @@ void *schedule()
     int min_idx = -1;
     while (1)
     {
-        // int semaphoreValue;
-        // sem_getvalue(&queue[min_idx].sem, &semaphoreValue);
-        // while (count == 0 || (min_idx==-1 && semaphoreValue==0))
-        ; //infinite wait
-        // if (semaphoreValue==0){
-        //     sem_post(&queue[min_idx].sem);
-        // }
         sem_wait(&clientrunning);
-        // printf("passed sem_wait clientrunning\n");
-
-        while (count == 0)
-            ; //infinite wait
-        // printf("passed infinite wait\n");
-
-        // printf("semafor index#%d : %d\n", min_idx, semaphoreValue);
 
         //only calculate shortest time left if there is no client running
+        while (count == 0)
+            ; //infinite wait
+   
+
 
         //there is some thread in the queue
         //determine which thread should run, shortest time_left?
@@ -558,7 +548,7 @@ void *schedule()
         sem_post(&quemodify);
 
         //we have the socket with the shortest time_left
-        printf("\nSocket #%d with time %d chosen for execution!\n", min_socket, min_time);
+        // printf("\nSocket #%d with time %d chosen for execution!\n", min_socket, min_time);
         //release lock
         //now execute this thread by releasing its semaphore
 
@@ -587,16 +577,6 @@ void *foo(void *arg)
         if (recv(client_socket, &inputString, sizeof(inputString), 0))
         {
 
-            //critical section
-            // struct Info info;
-            // info.socket = client_socket;
-            // info.time_left = 2;
-
-            // queue[idx] = info;
-            // idx++;
-            //critical section
-
-            // printf("%s\n", inputString);
             int client_queue_index;
 
             //check if input is executable
@@ -677,10 +657,6 @@ void *foo(void *arg)
                     //run exec and exit
                     if (pid0 == 0)
                     {
-                        // printf("inside fork\n");
-
-                        // printf("arg1: %s\n", arg1);
-                        // printf(programName);
 
                         // close(sendpipe[0]);   // close the read end of sendpipe
                         // dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
@@ -699,22 +675,16 @@ void *foo(void *arg)
                     }
                     waitpid(pid0, NULL, 0);
                     // printf("post reached\n");
-                    sem_post(&clientrunning);
+
                     if (queue[client_queue_index].time_left == 0)
                     {
                         queue[client_queue_index].socket = -1;
                         count--;
                     }
+                    sem_post(&clientrunning);
                     usleep(10);
-                    // sem_post(&queue[client_queue_index].sem);
                 }
 
-                // waitpid(pid0, NULL, 0);
-                // done with exec - not sure why even when it's commented out, the printf is sent after exec is done
-                // if (queue[client_queue_index].time_left == 0)
-                // {
-                //     queue[client_queue_index].socket = -1;
-                // }
                 strcpy(sendmsg, "Complete\n");
                 // close(sendpipe[1]);                                  //close the write end of sendpipe
                 // read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
@@ -722,6 +692,8 @@ void *foo(void *arg)
             //run the shell script
             else
             {
+
+                // printf("before queuemodify\n");
                 //critical section start
                 sem_wait(&quemodify);
                 for (int i = 0; i < 5; i++)
@@ -737,13 +709,43 @@ void *foo(void *arg)
                 }
                 sem_post(&quemodify);
 
+                // printf("after queuemodify\n");
+                sem_wait(&queue[client_queue_index].sem);
+                
+                sem_wait(&clientrunning);
+                int pid0 = fork();
+                if (pid0 == -1)
+                {
+                    perror("fork failed");
+                    exit(EXIT_FAILURE);
+                }
+                //run exec and exit
+                if (pid0 == 0)
+                {
+
+                    char numBuffer[20];
+                    char iterationsLeftBuffer[20];
+                    char clientSocketBuffer[20];
+                    sprintf(numBuffer, "%d", 1);
+                    sprintf(iterationsLeftBuffer, "%d", 1);
+                    sprintf(clientSocketBuffer, "%d", client_socket);
+                    execl("./sleep", "sleep", numBuffer, clientSocketBuffer, iterationsLeftBuffer, NULL);
+
+                    perror("executable"); //if we reached here, there is an error so we must exit
+                    exit(EXIT_FAILURE);
+                }
+                waitpid(pid0, NULL, 0);
+
                 //critical section end
                 //wait for schedule to release lock
-                sem_wait(&clientrunning);
+                // sem_wait(&clientrunning);
                 shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
                 // sem_post(&clientrunning);
                 queue[client_queue_index].socket = -1;
                 count--;
+                sem_post(&clientrunning);
+                usleep(10);
+                // printf("after usleep\n");
             }
 
             //send the result back to client

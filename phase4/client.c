@@ -48,7 +48,6 @@ int main(){
         printf("socket creation failed..\n");
         exit(EXIT_FAILURE);
     }
-    printf("Socket Number: #%d", network_socket);
     
 
 	//connect to another socket on the other side
