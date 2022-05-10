@@ -524,14 +524,13 @@ void *schedule()
         //only calculate shortest time left if there is no client running
         while (count == 0)
             ; //infinite wait
-   
-
 
         //there is some thread in the queue
         //determine which thread should run, shortest time_left?
         int min_socket;
         int min_time = __INT32_MAX__;
 
+        //modify queue
         sem_wait(&quemodify);
         for (int i = 0; i < 5; i++)
         {
@@ -548,15 +547,11 @@ void *schedule()
         sem_post(&quemodify);
 
         //we have the socket with the shortest time_left
-        // printf("\nSocket #%d with time %d chosen for execution!\n", min_socket, min_time);
         //release lock
         //now execute this thread by releasing its semaphore
-
         sem_post(&queue[min_idx].sem);
         sem_post(&clientrunning);
         usleep(10);
-
-        // printf("scheduler release clientrunning\n");
     }
 
     return 0;
@@ -583,8 +578,6 @@ void *foo(void *arg)
             if (inputString[0] == '.')
             {
                 bzero(sendmsg, sizeof(char) * maxInput);
-                // int sendpipe[2];
-                // pipe(sendpipe);
 
                 char tmp[maxInput];
                 strcpy(tmp, inputString);
@@ -593,22 +586,18 @@ void *foo(void *arg)
                 char *token = strtok(tmp, " ");
                 strcpy(programName, token);
 
-                // printf("programName: %s\n", programName);
-
                 char arg1[maxInput] = ""; //only one argument for now
                 while (token != NULL)
                 {
-                    // printf("token!=NULL\n");
                     token = strtok(NULL, " ");
                     if (token != NULL)
                     {
                         strcpy(arg1, token);
-                        // printf("%s\n", arg1);
                     }
                 }
 
                 //critical section start
-
+                //modify queue
                 sem_wait(&quemodify);
                 for (int i = 0; i < 5; i++)
                 {
@@ -628,11 +617,8 @@ void *foo(void *arg)
                 int firstround = 1;
                 while (queue[client_queue_index].time_left > 0)
                 {
-                    // printf("wait queue sem inside client\n");
                     sem_wait(&queue[client_queue_index].sem);
-                    // printf("wait client running inside client\n");
                     sem_wait(&clientrunning);
-                    // printf("after wait client\n");
 
                     int quant;
                     if (firstround)
@@ -658,24 +644,22 @@ void *foo(void *arg)
                     if (pid0 == 0)
                     {
 
-                        // close(sendpipe[0]);   // close the read end of sendpipe
-                        // dup2(sendpipe[1], 1); // redirect stdout to the write end of sendpipe
-
-                        // execl(programName, programName, quant, NULL);
                         char numBuffer[20];
                         char iterationsLeftBuffer[20];
                         char clientSocketBuffer[20];
                         sprintf(numBuffer, "%d", quant);
                         sprintf(iterationsLeftBuffer, "%d", timeLeft);
                         sprintf(clientSocketBuffer, "%d", client_socket);
+                        // Assuming the only program input is ./sleep
+                        // Run ./sleep program to simulate the round robin scheduling
                         execl("./sleep", "sleep", numBuffer, clientSocketBuffer, iterationsLeftBuffer, NULL);
 
                         perror("executable"); //if we reached here, there is an error so we must exit
                         exit(EXIT_FAILURE);
                     }
                     waitpid(pid0, NULL, 0);
-                    // printf("post reached\n");
 
+                    // delete from queue if the task is complete
                     if (queue[client_queue_index].time_left == 0)
                     {
                         queue[client_queue_index].socket = -1;
@@ -686,15 +670,13 @@ void *foo(void *arg)
                 }
 
                 strcpy(sendmsg, "Complete\n");
-                // close(sendpipe[1]);                                  //close the write end of sendpipe
-                // read(sendpipe[0], sendmsg, sizeof(char) * maxInput); //read from the read end of sendpipe
             }
             //run the shell script
             else
             {
 
-                // printf("before queuemodify\n");
                 //critical section start
+                //modify queue
                 sem_wait(&quemodify);
                 for (int i = 0; i < 5; i++)
                 {
@@ -708,10 +690,10 @@ void *foo(void *arg)
                     }
                 }
                 sem_post(&quemodify);
+                //critical section end
 
-                // printf("after queuemodify\n");
                 sem_wait(&queue[client_queue_index].sem);
-                
+
                 sem_wait(&clientrunning);
                 int pid0 = fork();
                 if (pid0 == -1)
@@ -729,6 +711,7 @@ void *foo(void *arg)
                     sprintf(numBuffer, "%d", 1);
                     sprintf(iterationsLeftBuffer, "%d", 1);
                     sprintf(clientSocketBuffer, "%d", client_socket);
+                    // run the sleep program to simulate the round robin scheduling
                     execl("./sleep", "sleep", numBuffer, clientSocketBuffer, iterationsLeftBuffer, NULL);
 
                     perror("executable"); //if we reached here, there is an error so we must exit
@@ -736,25 +719,17 @@ void *foo(void *arg)
                 }
                 waitpid(pid0, NULL, 0);
 
-                //critical section end
-                //wait for schedule to release lock
-                // sem_wait(&clientrunning);
                 shell(inputString, &inputRedirect, &outputRedirect, filename, sendmsg);
-                // sem_post(&clientrunning);
+
+                // delete from queue
                 queue[client_queue_index].socket = -1;
                 count--;
                 sem_post(&clientrunning);
                 usleep(10);
-                // printf("after usleep\n");
             }
 
             //send the result back to client
             send(client_socket, sendmsg, sizeof(sendmsg), 0);
-
-            //critical section
-
-            // printf("count: %d", count);
-            //critical section
         }
 
         //signal interrupt
